@@ -52,6 +52,14 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
                   Mentions légales
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/partenaire"
+                  className="text-gray-300 hover:text-white transition-colors"
+                >
+                  Devenir partenaire
+                </Link>
+              </li>
             </ul>
           </div>
 
