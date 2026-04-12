@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { fetchCityConfig } from '@/lib/data/city';
+import { ArrowLeft } from 'lucide-react';
 
 export async function generateMetadata(): Promise<Metadata> {
   const city = await fetchCityConfig();
   return {
-    title: 'Mentions L\u00e9gales',
-    description: `Mentions l\u00e9gales du site ${city.domain}`,
+    title: 'Mentions Légales',
+    description: `Mentions légales du site ${city.domain}`,
     alternates: { canonical: `${city.siteUrl}/mentions-legales` },
     robots: { index: false },
   };
@@ -16,111 +18,110 @@ export default async function MentionsLegalesPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">Mentions L\u00e9gales</h1>
+      {/* Navigation header */}
+      <div className="border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+          <Link href="/" className="flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-gray-600 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            {city.displayName}
+          </Link>
+        </div>
+      </div>
 
-        <div className="prose prose-lg max-w-none text-gray-700 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold text-gray-900 mb-10">Mentions Légales</h1>
 
-          {/* 1. Éditeur */}
+        <div className="space-y-10 text-gray-700 text-[15px] leading-relaxed">
+
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">1. \u00c9diteur du site</h2>
-            <p>Le site <strong>{city.domain}</strong> est \u00e9dit\u00e9 par :</p>
-            <ul className="list-none pl-0 space-y-1">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">1. Éditeur du site</h2>
+            <p className="mb-2">Le site <strong>{city.domain}</strong> est édité par :</p>
+            <ul className="space-y-1 pl-0">
               <li><strong>Raison sociale :</strong> {city.editorName}</li>
               <li><strong>Forme juridique :</strong> Limited Liability Partnership (LLP) de droit britannique</li>
-              <li><strong>Num\u00e9ro d&apos;immatriculation :</strong> OC455142 (Companies House, Royaume-Uni)</li>
-              <li><strong>Si\u00e8ge social :</strong> 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom</li>
+              <li><strong>Numéro d&apos;immatriculation :</strong> OC455142 (Companies House, Royaume-Uni)</li>
+              <li><strong>Siège social :</strong> 71-75 Shelton Street, Covent Garden, London, WC2H 9JQ, United Kingdom</li>
               <li><strong>Email :</strong> {city.contactEmail}</li>
               <li><strong>TVA :</strong> Non assujetti</li>
             </ul>
           </section>
 
-          {/* 2. Directeur de publication */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">2. Directeur de la publication</h2>
-            <p>Le directeur de la publication est le g\u00e9rant de {city.editorName}, en sa qualit\u00e9 de repr\u00e9sentant l\u00e9gal de la soci\u00e9t\u00e9.</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">2. Directeur de la publication</h2>
+            <p>Le directeur de la publication est le gérant de {city.editorName}, en sa qualité de représentant légal de la société.</p>
           </section>
 
-          {/* 3. Hébergement */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">3. H\u00e9bergement</h2>
-            <p>Le site est h\u00e9berg\u00e9 par :</p>
-            <ul className="list-none pl-0 space-y-1">
+            <h2 className="text-lg font-bold text-gray-900 mb-3">3. Hébergement</h2>
+            <p className="mb-2">Le site est hébergé par :</p>
+            <ul className="space-y-1 pl-0">
               <li><strong>Raison sociale :</strong> Vercel Inc.</li>
-              <li><strong>Adresse :</strong> 440 N Barranca Ave #4133, Covina, CA 91723, \u00c9tats-Unis</li>
+              <li><strong>Adresse :</strong> 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis</li>
               <li><strong>Site web :</strong> vercel.com</li>
             </ul>
           </section>
 
-          {/* 4. Stockage des données */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">4. Prestataires de stockage des donn\u00e9es</h2>
-            <p>Conform\u00e9ment \u00e0 la loi SREN du 21 mai 2024, les prestataires assurant le stockage des donn\u00e9es trait\u00e9es dans le cadre du site sont :</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">4. Prestataires de stockage des données</h2>
+            <p className="mb-2">Conformément à la loi SREN du 21 mai 2024, les prestataires assurant le stockage des données traitées dans le cadre du site sont :</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li><strong>Vercel Inc.</strong> (h\u00e9bergement du site et des donn\u00e9es applicatives) &mdash; Covina, CA, \u00c9tats-Unis</li>
-              <li><strong>Supabase Inc.</strong> (base de donn\u00e9es) &mdash; San Francisco, CA, \u00c9tats-Unis</li>
-              <li><strong>Google LLC</strong> (mesure d&apos;audience via Google Analytics) &mdash; Mountain View, CA, \u00c9tats-Unis</li>
+              <li><strong>Vercel Inc.</strong> (hébergement du site et des données applicatives) — Covina, CA, États-Unis</li>
+              <li><strong>Supabase Inc.</strong> (base de données) — San Francisco, CA, États-Unis</li>
+              <li><strong>Google LLC</strong> (mesure d&apos;audience via Google Analytics) — Mountain View, CA, États-Unis</li>
             </ul>
           </section>
 
-          {/* 5. Propriété intellectuelle */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">5. Propri\u00e9t\u00e9 intellectuelle</h2>
-            <p>L&apos;ensemble des \u00e9l\u00e9ments constituant le site {city.domain} (textes, images, graphismes, logo, structure, base de donn\u00e9es) est prot\u00e9g\u00e9 par les lois fran\u00e7aises et internationales relatives \u00e0 la propri\u00e9t\u00e9 intellectuelle.</p>
-            <p>Toute reproduction, repr\u00e9sentation, modification ou extraction, totale ou partielle, du contenu du site, par quelque proc\u00e9d\u00e9 que ce soit, sans autorisation pr\u00e9alable et \u00e9crite de {city.editorName}, est strictement interdite et constitue une contrefa\u00e7on.</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">5. Propriété intellectuelle</h2>
+            <p className="mb-2">L&apos;ensemble des éléments constituant le site {city.domain} (textes, images, graphismes, logo, structure, base de données) est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.</p>
+            <p>Toute reproduction, représentation, modification ou extraction, totale ou partielle, du contenu du site, par quelque procédé que ce soit, sans autorisation préalable et écrite de {city.editorName}, est strictement interdite et constitue une contrefaçon.</p>
           </section>
 
-          {/* 6. Données personnelles & RGPD */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">6. Donn\u00e9es personnelles et RGPD</h2>
-            <p>Conform\u00e9ment au R\u00e8glement G\u00e9n\u00e9ral sur la Protection des Donn\u00e9es (RGPD) et \u00e0 la loi Informatique et Libert\u00e9s, {city.editorName} s&apos;engage \u00e0 prot\u00e9ger les donn\u00e9es personnelles des utilisateurs du site.</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">6. Données personnelles et RGPD</h2>
+            <p className="mb-3">Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés, {city.editorName} s&apos;engage à protéger les données personnelles des utilisateurs du site.</p>
 
-            <h3 className="text-xl font-semibold text-gray-900 mt-4">Donn\u00e9es collect\u00e9es</h3>
-            <p>Le site ne n\u00e9cessite aucune inscription et ne collecte aucune donn\u00e9e personnelle directement. Les seules donn\u00e9es trait\u00e9es sont :</p>
+            <h3 className="text-base font-semibold text-gray-900 mt-4 mb-2">Données collectées</h3>
+            <p className="mb-2">Le site ne nécessite aucune inscription et ne collecte aucune donnée personnelle directement. Les seules données traitées sont :</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Donn\u00e9es de navigation anonymis\u00e9es (pages visit\u00e9es, dur\u00e9e de visite) via Google Analytics, sous r\u00e9serve de votre consentement</li>
-              <li>Donn\u00e9es techniques n\u00e9cessaires au fonctionnement du site (adresse IP, type de navigateur)</li>
+              <li>Données de navigation anonymisées (pages visitées, durée de visite) via Google Analytics, sous réserve de votre consentement</li>
+              <li>Données techniques nécessaires au fonctionnement du site (adresse IP, type de navigateur)</li>
             </ul>
 
-            <h3 className="text-xl font-semibold text-gray-900 mt-4">Finalit\u00e9s</h3>
-            <p>Ces donn\u00e9es sont utilis\u00e9es exclusivement \u00e0 des fins de mesure d&apos;audience et d&apos;am\u00e9lioration du site.</p>
+            <h3 className="text-base font-semibold text-gray-900 mt-4 mb-2">Finalités</h3>
+            <p>Ces données sont utilisées exclusivement à des fins de mesure d&apos;audience et d&apos;amélioration du site.</p>
 
-            <h3 className="text-xl font-semibold text-gray-900 mt-4">Vos droits</h3>
-            <p>Vous disposez d&apos;un droit d&apos;acc\u00e8s, de rectification, de suppression, de limitation et de portabilit\u00e9 de vos donn\u00e9es. Vous pouvez \u00e9galement vous opposer au traitement de vos donn\u00e9es et introduire une r\u00e9clamation aupr\u00e8s de la CNIL (Commission Nationale de l&apos;Informatique et des Libert\u00e9s).</p>
-            <p>Pour exercer vos droits, contactez-nous \u00e0 : <strong>{city.contactEmail}</strong></p>
+            <h3 className="text-base font-semibold text-gray-900 mt-4 mb-2">Vos droits</h3>
+            <p className="mb-2">Vous disposez d&apos;un droit d&apos;accès, de rectification, de suppression, de limitation et de portabilité de vos données. Vous pouvez également vous opposer au traitement de vos données et introduire une réclamation auprès de la CNIL (Commission Nationale de l&apos;Informatique et des Libertés).</p>
+            <p>Pour exercer vos droits, contactez-nous à : <strong>{city.contactEmail}</strong></p>
           </section>
 
-          {/* 7. Cookies */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">7. Cookies</h2>
-            <p>Le site {city.domain} utilise des cookies et traceurs :</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">7. Cookies</h2>
+            <p className="mb-2">Le site {city.domain} utilise des cookies et traceurs :</p>
             <ul className="list-disc pl-6 space-y-1">
-              <li><strong>Cookies fonctionnels :</strong> n\u00e9cessaires au bon fonctionnement du site (aucun consentement requis)</li>
-              <li><strong>Cookies analytiques (Google Analytics) :</strong> utilis\u00e9s pour mesurer l&apos;audience du site. Ces cookies ne sont d\u00e9pos\u00e9s qu&apos;avec votre consentement pr\u00e9alable.</li>
+              <li><strong>Cookies fonctionnels :</strong> nécessaires au bon fonctionnement du site (aucun consentement requis)</li>
+              <li><strong>Cookies analytiques (Google Analytics) :</strong> utilisés pour mesurer l&apos;audience du site. Ces cookies ne sont déposés qu&apos;avec votre consentement préalable.</li>
             </ul>
-            <p>Vous pouvez \u00e0 tout moment modifier vos pr\u00e9f\u00e9rences en mati\u00e8re de cookies via les param\u00e8tres de votre navigateur ou en nous contactant \u00e0 {city.contactEmail}.</p>
+            <p className="mt-2">Vous pouvez à tout moment modifier vos préférences en matière de cookies via les paramètres de votre navigateur ou en nous contactant à {city.contactEmail}.</p>
           </section>
 
-          {/* 8. Liens hypertextes */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">8. Liens hypertextes</h2>
-            <p>Le site {city.domain} contient des liens vers des sites tiers (Google Maps, sites web des \u00e9tablissements r\u00e9f\u00e9renc\u00e9s). {city.editorName} n&apos;exerce aucun contr\u00f4le sur le contenu de ces sites et d\u00e9cline toute responsabilit\u00e9 quant \u00e0 leur contenu ou \u00e0 leur disponibilit\u00e9.</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">8. Liens hypertextes</h2>
+            <p>Le site {city.domain} contient des liens vers des sites tiers (Google Maps, sites web des établissements référencés). {city.editorName} n&apos;exerce aucun contrôle sur le contenu de ces sites et décline toute responsabilité quant à leur contenu ou à leur disponibilité.</p>
           </section>
 
-          {/* 9. Droit applicable */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">9. Droit applicable</h2>
-            <p>Les pr\u00e9sentes mentions l\u00e9gales sont r\u00e9gies par le droit fran\u00e7ais. En cas de litige, et apr\u00e8s tentative de r\u00e9solution amiable, les tribunaux fran\u00e7ais seront seuls comp\u00e9tents.</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">9. Droit applicable</h2>
+            <p>Les présentes mentions légales sont régies par le droit français. En cas de litige, et après tentative de résolution amiable, les tribunaux français seront seuls compétents.</p>
           </section>
 
-          {/* 10. Contact */}
           <section>
-            <h2 className="text-2xl font-bold text-gray-900">10. Contact</h2>
-            <p>Pour toute question relative aux pr\u00e9sentes mentions l\u00e9gales, vous pouvez nous contacter \u00e0 :</p>
-            <p><strong>{city.contactEmail}</strong></p>
+            <h2 className="text-lg font-bold text-gray-900 mb-3">10. Contact</h2>
+            <p>Pour toute question relative aux présentes mentions légales, vous pouvez nous contacter à : <strong>{city.contactEmail}</strong></p>
           </section>
 
-          <p className="text-sm text-gray-400 mt-12">Derni\u00e8re mise \u00e0 jour : avril 2026</p>
+          <p className="text-sm text-gray-400 pt-8 border-t border-gray-100">Dernière mise à jour : avril 2026</p>
         </div>
       </div>
     </div>
