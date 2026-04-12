@@ -13,6 +13,7 @@ interface HeaderProps {
   selectedZone?: ZoneDefinition | null;
   onZoneSelect?: (zone: ZoneDefinition | null) => void;
   cityName?: string;
+  heroImageUrl?: string | null;
   sectors?: GeographicSector[];
   pizzerias?: Pizzeria[];
 }
@@ -25,6 +26,7 @@ export default function Header({
   selectedZone = null,
   onZoneSelect,
   cityName = "",
+  heroImageUrl,
   sectors = [],
   pizzerias = [],
 }: HeaderProps) {
@@ -40,15 +42,23 @@ export default function Header({
 
   return (
     <header className="relative overflow-hidden bg-[#1a1a1a]" style={{ minHeight: '260px' }}>
-      {/* Background image with dark overlay */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-30"
-        style={{
-          backgroundImage: "url('/lovable-uploads/2f182011-29ef-45c7-9902-164fe4326b49.png')",
-        }}
-        role="img"
-        aria-label="Pizza background"
-      />
+      {/* Background: image if available, subtle pattern fallback */}
+      {heroImageUrl ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{ backgroundImage: `url('${heroImageUrl}')` }}
+          role="img"
+          aria-label="Pizza background"
+        />
+      ) : (
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
+      )}
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {/* Title */}

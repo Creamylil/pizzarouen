@@ -37,6 +37,7 @@ export default async function HomePage({
         mainPostalCodes={cityConfig.mainPostalCodes}
         defaultSectorSlug={cityConfig.defaultSectorSlug}
         cityName={cityConfig.name}
+        heroImageUrl={cityConfig.heroImageUrl}
         centerCoords={[cityConfig.centerLat, cityConfig.centerLng]}
       />
       <SEOContent seoContent={cityConfig.seoContent} cityName={cityConfig.name} />

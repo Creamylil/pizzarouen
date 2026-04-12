@@ -24,6 +24,7 @@ interface HomePageClientProps {
   mainPostalCodes: string[];
   defaultSectorSlug: string;
   cityName: string;
+  heroImageUrl?: string | null;
   centerCoords: [number, number];
 }
 
@@ -34,6 +35,7 @@ export default function HomePageClient({
   mainPostalCodes,
   defaultSectorSlug,
   cityName,
+  heroImageUrl,
   centerCoords,
 }: HomePageClientProps) {
   const [activeTab, setActiveTab] = useState<'sur-place' | 'emporter' | 'livraison' | null>(null);
@@ -182,6 +184,7 @@ export default function HomePageClient({
         sectors={sectors}
         pizzerias={pizzerias}
         cityName={cityName}
+        heroImageUrl={heroImageUrl}
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
