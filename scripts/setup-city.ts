@@ -221,9 +221,10 @@ async function scrapePizzerias(
       await new Promise((r) => setTimeout(r, 800));
     }
 
-    // Services info
+    // Services info — types = modes de service (sur-place, emporter, livraison)
+    // Google Maps ne fournit pas cette info → on met les 3 par défaut
     const servicesInfo = {
-      types: ['Pizzeria'],
+      types: ['sur-place', 'emporter', 'livraison'],
       specialties: ['Pizza'],
       services: [] as string[],
       priceRange,

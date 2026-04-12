@@ -80,9 +80,16 @@ export default function HomePageClient({
     }
   }, [initialSector, sectors, defaultSectorSlug]);
 
+  const validServiceTypes: string[] = ['sur-place', 'emporter', 'livraison'];
+
   const { localOpenPizzerias, nearbyOpenPizzerias, closedPizzerias } = useMemo(() => {
     let filtered = pizzerias.filter(pizzeria => {
-      if (activeTab && !pizzeria.types.includes(activeTab)) return false;
+      // Si un onglet est actif, ne filtrer que les pizzerias qui ont des types de service renseignés
+      // Les pizzerias sans types de service valides (ex: importées par script) restent visibles
+      if (activeTab) {
+        const hasServiceInfo = pizzeria.types.some(t => validServiceTypes.includes(t));
+        if (hasServiceInfo && !pizzeria.types.includes(activeTab)) return false;
+      }
       if (filters.priceRange && pizzeria.priceRange !== filters.priceRange) return false;
       if (filters.rating && pizzeria.rating < filters.rating) return false;
       if (filters.halalOnly && !pizzeria.halal) return false;
@@ -159,7 +166,10 @@ export default function HomePageClient({
   const mapFilteredPizzerias = useMemo(() => {
     if (filters.showTop10) return top10Pizzerias;
     return pizzerias.filter(pizzeria => {
-      if (activeTab && !pizzeria.types.includes(activeTab)) return false;
+      if (activeTab) {
+        const hasServiceInfo = pizzeria.types.some(t => validServiceTypes.includes(t));
+        if (hasServiceInfo && !pizzeria.types.includes(activeTab)) return false;
+      }
       if (filters.priceRange && pizzeria.priceRange !== filters.priceRange) return false;
       if (filters.rating && pizzeria.rating < filters.rating) return false;
       if (filters.halalOnly && !pizzeria.halal) return false;
