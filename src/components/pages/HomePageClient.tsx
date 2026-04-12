@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import PizzeriaCard from '@/components/pizzeria/PizzeriaCard';
 import Header from '@/components/layout/Header';
@@ -23,10 +22,10 @@ const PizzeriaMap = dynamic(() => import('@/components/map/PizzeriaMap'), {
 interface HomePageClientProps {
   pizzerias: Pizzeria[];
   sectors: GeographicSector[];
+  initialSector?: string | null;
 }
 
-export default function HomePageClient({ pizzerias, sectors }: HomePageClientProps) {
-  const searchParams = useSearchParams();
+export default function HomePageClient({ pizzerias, sectors, initialSector }: HomePageClientProps) {
   const [activeTab, setActiveTab] = useState<'sur-place' | 'emporter' | 'livraison' | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [filters, setFilters] = useState<Filters>({
@@ -46,7 +45,7 @@ export default function HomePageClient({ pizzerias, sectors }: HomePageClientPro
   };
 
   useEffect(() => {
-    const sectorFromUrl = searchParams.get('sector');
+    const sectorFromUrl = initialSector;
     if (!sectorFromUrl || sectorFromUrl === 'undefined' || sectorFromUrl.trim() === '') {
       setFilters(prev => ({ ...prev, sector: '76000' }));
       if (sectors.length > 0) {
@@ -55,21 +54,19 @@ export default function HomePageClient({ pizzerias, sectors }: HomePageClientPro
       }
       return;
     }
-    if (sectorFromUrl && sectorFromUrl !== 'undefined' && sectorFromUrl.trim() !== '') {
-      if (sectors.length > 0) {
-        const sectorExists = sectors.some(sector => sector.slug === sectorFromUrl || sector.postal_code === sectorFromUrl);
-        if (sectorExists) {
-          setFilters(prev => ({ ...prev, sector: sectorFromUrl }));
-          const correspondingZone = findZoneBySector(sectors, sectorFromUrl);
-          setSelectedZone(correspondingZone);
-        } else {
-          setFilters(prev => ({ ...prev, sector: '76000' }));
-        }
-      } else {
+    if (sectors.length > 0) {
+      const sectorExists = sectors.some(sector => sector.slug === sectorFromUrl || sector.postal_code === sectorFromUrl);
+      if (sectorExists) {
         setFilters(prev => ({ ...prev, sector: sectorFromUrl }));
+        const correspondingZone = findZoneBySector(sectors, sectorFromUrl);
+        setSelectedZone(correspondingZone);
+      } else {
+        setFilters(prev => ({ ...prev, sector: '76000' }));
       }
+    } else {
+      setFilters(prev => ({ ...prev, sector: sectorFromUrl }));
     }
-  }, [searchParams, sectors]);
+  }, [initialSector, sectors]);
 
   const { localOpenPizzerias, nearbyOpenPizzerias, closedPizzerias } = useMemo(() => {
     let filtered = pizzerias.filter(pizzeria => {
