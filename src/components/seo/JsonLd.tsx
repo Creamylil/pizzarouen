@@ -99,13 +99,12 @@ export function generateOrganizationSchema(city: CityConfig) {
 }
 
 export function generateItemListSchema(pizzerias: Pizzeria[], listName: string, city: CityConfig) {
-  const items = pizzerias.slice(0, 30);
   return {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: listName,
-    numberOfItems: items.length,
-    itemListElement: items.map((p, i) => {
+    numberOfItems: pizzerias.length,
+    itemListElement: pizzerias.map((p, i) => {
       const item: Record<string, unknown> = {
         '@type': 'Restaurant',
         name: p.name,
