@@ -40,8 +40,10 @@ export async function generateMetadata(): Promise<Metadata> {
       ICBM: `${city.centerLat}, ${city.centerLng}`,
     },
     icons: {
-      icon: city.logoUrl || "/favicon.ico",
-      apple: city.logoUrl
+      icon: city.logoUrl?.includes("city-assets")
+        ? city.logoUrl.replace("logo.webp", "favicon.ico")
+        : "/favicon.ico",
+      apple: city.logoUrl?.includes("city-assets")
         ? city.logoUrl.replace("logo.webp", "apple-touch-icon.png")
         : "/favicon.ico",
     },
