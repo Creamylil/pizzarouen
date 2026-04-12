@@ -1,0 +1,16 @@
+{
+  "slug": "rennes",
+  "name": "Rennes",
+  "displayName": "Pizza Rennes",
+  "domain": "pizzarennes.com",
+  "siteUrl": "https://pizzarennes.com",
+  "centerLat": 48.1173,
+  "centerLng": -1.6778,
+  "geoRegion": "FR-35",
+  "geoPlacename": "Rennes",
+  "addressRegion": "Bretagne",
+  "mainPostalCodes": ["35000", "35200", "35700"],
+  "contactEmail": "contact@pizzarennes.com",
+  "editorName": "JSD MEDIA LLP",
+  "googleAnalyticsId": null
+}

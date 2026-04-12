@@ -20,6 +20,7 @@ import { parseGoogleOpeningHours } from './lib/opening-hours-parser';
 import { uploadPizzeriaImage } from './lib/image-uploader';
 import { generateSeoFields } from './lib/seo-templates';
 import { log } from './lib/logger';
+import { generateAndUploadLogo } from './lib/logo-generator';
 import type { CitySetupConfig, GooglePlaceResult, SetupStats } from './lib/types';
 
 // ─── Parse CLI args ───────────────────────────────────────────
@@ -450,6 +451,29 @@ async function main() {
 
   // Étape 1 : Créer la ville
   const cityId = await createCity(config, dryRun);
+
+  // Étape 1b : Générer le logo via DALL-E
+  if (process.env.OPENAI_API_KEY) {
+    log.step('Génération du logo via DALL-E 3...');
+    const logoResult = await generateAndUploadLogo(config.slug, {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      openaiApiKey: process.env.OPENAI_API_KEY!,
+      dryRun,
+    });
+
+    if (logoResult && !dryRun) {
+      // Mettre à jour la ville avec l'URL du logo
+      const supabase = createAdminClient();
+      await supabase
+        .from('cities')
+        .update({ logo_url: logoResult.logoUrl })
+        .eq('id', cityId);
+      log.success(`Logo associé à la ville "${config.name}"`);
+    }
+  } else {
+    log.warn('OPENAI_API_KEY non définie — génération du logo ignorée');
+  }
 
   // Étape 2 : Scraper et insérer les pizzerias
   const { stats, pizzeriasWithPostalCodes } = await scrapePizzerias(

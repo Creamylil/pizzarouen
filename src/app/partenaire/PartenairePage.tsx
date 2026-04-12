@@ -2,78 +2,47 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Check, Star, Zap, Crown, Phone, Mail, MessageCircle } from 'lucide-react';
+import type { PricingPlan } from '@/types/pricing';
+import type { LucideIcon } from 'lucide-react';
 
 interface PartenairePageProps {
   cityName: string;
   cityDisplayName: string;
   contactEmail: string;
   contactWhatsapp: string | null;
+  plans: PricingPlan[];
 }
 
-const plans = [
-  {
-    id: 'referencement',
-    name: 'Référencement',
-    tagline: 'Soyez visible',
-    price: 19,
-    annualPrice: 179,
-    icon: Star,
-    gradient: 'from-blue-500 to-blue-600',
+/* ─── Mapping icon string → Lucide component ─── */
+const iconMap: Record<string, LucideIcon> = {
+  star: Star,
+  zap: Zap,
+  crown: Crown,
+};
+
+/* ─── Mapping color string → Tailwind classes ─── */
+const colorMap: Record<string, { lightBg: string; iconColor: string; checkColor: string; ctaClass: string }> = {
+  blue: {
     lightBg: 'bg-blue-50',
     iconColor: 'text-blue-500',
-    borderColor: 'border-blue-200',
     checkColor: 'text-blue-500',
-    features: [
-      'Fiche pizzeria avec horaires et coordonnées',
-      'Apparition dans les résultats de recherche',
-      'Localisation sur la carte interactive',
-      'Mise à jour des informations à tout moment',
-    ],
+    ctaClass: 'bg-gray-900 text-white hover:bg-gray-800',
   },
-  {
-    id: 'priorite',
-    name: 'Priorité',
-    tagline: 'Passez devant',
-    price: 39,
-    annualPrice: 349,
-    icon: Zap,
-    gradient: 'from-amber-500 to-orange-500',
+  amber: {
     lightBg: 'bg-amber-50',
     iconColor: 'text-amber-500',
-    borderColor: 'border-amber-300',
     checkColor: 'text-amber-500',
-    popular: true,
-    features: [
-      'Tout le niveau Référencement',
-      'Badge "Recommandé" sur votre fiche',
-      'Classement prioritaire dans les résultats',
-      'Inclusion dans le Top 10 de votre zone',
-    ],
+    ctaClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-200/50',
   },
-  {
-    id: 'coup-de-coeur',
-    name: 'Coup de Coeur',
-    tagline: 'Le meilleur classement',
-    price: 79,
-    annualPrice: 699,
-    icon: Crown,
-    gradient: 'from-purple-600 to-purple-700',
+  purple: {
     lightBg: 'bg-purple-50',
     iconColor: 'text-purple-600',
-    borderColor: 'border-purple-300',
     checkColor: 'text-purple-600',
-    features: [
-      'Tout le niveau Priorité',
-      'Badge "Coup de Coeur" exclusif',
-      'Position la plus haute dans les résultats',
-      'Top 10 garanti sur votre zone',
-      'Visibilité maximale en page d\'accueil',
-      'Nombre de places limité par secteur',
-    ],
+    ctaClass: 'bg-purple-700 text-white hover:bg-purple-800 shadow-md shadow-purple-200/50',
   },
-];
+};
 
-export default function PartenairePage({ cityName, cityDisplayName, contactEmail, contactWhatsapp }: PartenairePageProps) {
+export default function PartenairePage({ cityName, cityDisplayName, contactEmail, contactWhatsapp, plans }: PartenairePageProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
@@ -137,14 +106,16 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-start">
             {plans.map((plan) => {
-              const Icon = plan.icon;
+              const Icon = iconMap[plan.icon] || Star;
+              const colors = colorMap[plan.color] || colorMap.blue;
+
               return (
                 <div
                   key={plan.id}
-                  className={`relative bg-white rounded-2xl border-2 ${plan.popular ? 'border-amber-400 shadow-xl shadow-amber-100/50' : 'border-gray-100 shadow-lg'} p-8 flex flex-col`}
+                  className={`relative bg-white rounded-2xl border-2 ${plan.isPopular ? 'border-amber-400 shadow-xl shadow-amber-100/50' : 'border-gray-100 shadow-lg'} p-8 flex flex-col`}
                 >
                   {/* Popular badge */}
-                  {plan.popular && (
+                  {plan.isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-5 py-1.5 rounded-full shadow-md uppercase tracking-wider">
                         Le plus populaire
@@ -154,8 +125,8 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
 
                   {/* Header */}
                   <div className="mb-6">
-                    <div className={`inline-flex items-center justify-center w-14 h-14 ${plan.lightBg} rounded-xl mb-4`}>
-                      <Icon className={`w-7 h-7 ${plan.iconColor}`} />
+                    <div className={`inline-flex items-center justify-center w-14 h-14 ${colors.lightBg} rounded-xl mb-4`}>
+                      <Icon className={`w-7 h-7 ${colors.iconColor}`} />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
                       {plan.name}
@@ -169,14 +140,14 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
                   <div className="mb-6 pb-6 border-b border-gray-100">
                     <div className="flex items-baseline gap-1">
                       <span className="text-5xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                        {plan.price}€
+                        {plan.priceMonthly}€
                       </span>
                       <span className="text-gray-400 text-sm" style={{ fontFamily: 'var(--font-body)' }}>
                         /mois
                       </span>
                     </div>
                     <p className="text-xs text-gray-400 mt-2" style={{ fontFamily: 'var(--font-body)' }}>
-                      ou {plan.annualPrice}€/an (2 mois offerts)
+                      ou {plan.priceAnnual}€/an (2 mois offerts)
                     </p>
                   </div>
 
@@ -184,8 +155,8 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
                   <ul className="space-y-3.5 mb-8 flex-1" style={{ fontFamily: 'var(--font-body)' }}>
                     {plan.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full ${plan.lightBg} flex items-center justify-center`}>
-                          <Check className={`w-3 h-3 ${plan.checkColor}`} strokeWidth={3} />
+                        <div className={`flex-shrink-0 mt-0.5 w-5 h-5 rounded-full ${colors.lightBg} flex items-center justify-center`}>
+                          <Check className={`w-3 h-3 ${colors.checkColor}`} strokeWidth={3} />
                         </div>
                         <span className="text-sm text-gray-700 leading-snug">{feature}</span>
                       </li>
@@ -196,11 +167,9 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
                   <a
                     href={contactWhatsapp ? `https://wa.me/${contactWhatsapp.replace(/\s+/g, '')}?text=${encodeURIComponent(`Bonjour, je suis intéressé par la formule ${plan.name} pour ma pizzeria sur ${cityDisplayName}.`)}` : `mailto:${contactEmail}?subject=${encodeURIComponent(`Formule ${plan.name} - ${cityDisplayName}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe suis intéressé par la formule ${plan.name} pour ma pizzeria.\n\nCordialement`)}`}
                     className={`block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-md shadow-amber-200/50'
-                        : plan.id === 'coup-de-coeur'
-                          ? 'bg-purple-700 text-white hover:bg-purple-800 shadow-md shadow-purple-200/50'
-                          : 'bg-gray-900 text-white hover:bg-gray-800'
+                      plan.isPopular
+                        ? colorMap.amber.ctaClass
+                        : colors.ctaClass
                     }`}
                     style={{ fontFamily: 'var(--font-body)' }}
                   >

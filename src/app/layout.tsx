@@ -25,11 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: city.metaTitle,
       description: city.metaDescription,
       siteName: city.ogSiteName,
+      ...(city.logoUrl ? { images: [{ url: city.logoUrl, width: 512, height: 512, alt: city.displayName }] } : {}),
     },
     twitter: {
-      card: "summary_large_image",
+      card: city.logoUrl ? "summary" : "summary_large_image",
       title: city.metaTitle,
       description: city.metaDescription,
+      ...(city.logoUrl ? { images: [city.logoUrl] } : {}),
     },
     other: {
       "geo.region": city.geoRegion,
@@ -39,6 +41,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: city.logoUrl || "/favicon.ico",
+      apple: city.logoUrl
+        ? city.logoUrl.replace("logo.webp", "apple-touch-icon.png")
+        : "/favicon.ico",
     },
   };
 }
@@ -75,7 +80,7 @@ export default async function RootLayout({
       <body className="min-h-screen flex flex-col">
         <TooltipProvider>
           <main className="flex-1">{children}</main>
-          <Footer cityDisplayName={city.displayName} contactEmail={city.contactEmail} contactWhatsapp={city.contactWhatsapp} sectors={sectors} />
+          <Footer cityDisplayName={city.displayName} contactEmail={city.contactEmail} contactWhatsapp={city.contactWhatsapp} logoUrl={city.logoUrl} sectors={sectors} />
           <Toaster />
         </TooltipProvider>
         {city.googleAnalyticsId && (

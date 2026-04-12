@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Pizza, Mail, MessageCircle } from "lucide-react";
 import type { GeographicSector } from "@/types/pizzeria";
 
@@ -6,17 +7,22 @@ interface FooterProps {
   cityDisplayName: string;
   contactEmail: string;
   contactWhatsapp: string | null;
+  logoUrl: string | null;
   sectors: GeographicSector[];
 }
 
-export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp, sectors }: FooterProps) {
+export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp, logoUrl, sectors }: FooterProps) {
   return (
     <footer className="bg-gray-900 text-white py-12">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <Pizza className="h-8 w-8 text-red-500" />
+              {logoUrl ? (
+                <Image src={logoUrl} alt={cityDisplayName} width={36} height={36} className="rounded" />
+              ) : (
+                <Pizza className="h-8 w-8 text-red-500" />
+              )}
               <span className="text-xl font-bold">{cityDisplayName}</span>
             </Link>
             <p className="text-gray-300 text-sm">
