@@ -74,12 +74,15 @@ export default function Header({
         {/* Service tabs — clean pill style */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6">
           {tabConfig.map(tab => (
-            <button
+            <h2
               key={tab.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab(tab.id); } }}
               className={`
                 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-sm font-semibold
-                transition-all duration-200 border
+                transition-all duration-200 border cursor-pointer m-0
                 ${activeTab === tab.id
                   ? 'bg-white text-[#1a1a1a] border-white shadow-lg'
                   : 'bg-transparent text-white/80 border-white/20 hover:border-white/50 hover:text-white'
@@ -89,7 +92,7 @@ export default function Header({
             >
               <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
               <span>{tab.label}</span>
-            </button>
+            </h2>
           ))}
         </div>
 
