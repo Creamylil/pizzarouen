@@ -5,9 +5,7 @@ import dynamic from 'next/dynamic';
 import PizzeriaCard from '@/components/pizzeria/PizzeriaCard';
 import Header from '@/components/layout/Header';
 import EmptyState from '@/components/states/EmptyState';
-import MapViewToggle from '@/components/map/MapViewToggle';
-import { Button } from '@/components/ui/button';
-import { X, ArrowRight } from 'lucide-react';
+import { Map, X } from 'lucide-react';
 import type { Pizzeria, GeographicSector, Filters } from '@/types/pizzeria';
 import type { ZoneDefinition } from '@/utils/geographicRanking';
 import { parseOpeningHours, isOpen } from '@/utils/openingHours';
@@ -23,15 +21,27 @@ interface HomePageClientProps {
   pizzerias: Pizzeria[];
   sectors: GeographicSector[];
   initialSector?: string | null;
+  mainPostalCodes: string[];
+  defaultSectorSlug: string;
+  cityName: string;
+  centerCoords: [number, number];
 }
 
-export default function HomePageClient({ pizzerias, sectors, initialSector }: HomePageClientProps) {
+export default function HomePageClient({
+  pizzerias,
+  sectors,
+  initialSector,
+  mainPostalCodes,
+  defaultSectorSlug,
+  cityName,
+  centerCoords,
+}: HomePageClientProps) {
   const [activeTab, setActiveTab] = useState<'sur-place' | 'emporter' | 'livraison' | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [filters, setFilters] = useState<Filters>({
     priceRange: '',
     rating: 0,
-    sector: '76000',
+    sector: defaultSectorSlug,
     halalOnly: false,
     showTop10: false,
   });
@@ -40,16 +50,16 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
   const handleZoneSelect = (zone: ZoneDefinition | null) => {
     setSelectedZone(zone);
     if (!zone) {
-      setFilters(prev => ({ ...prev, sector: '76000' }));
+      setFilters(prev => ({ ...prev, sector: defaultSectorSlug }));
     }
   };
 
   useEffect(() => {
     const sectorFromUrl = initialSector;
     if (!sectorFromUrl || sectorFromUrl === 'undefined' || sectorFromUrl.trim() === '') {
-      setFilters(prev => ({ ...prev, sector: '76000' }));
+      setFilters(prev => ({ ...prev, sector: defaultSectorSlug }));
       if (sectors.length > 0) {
-        const defaultZone = findZoneBySector(sectors, '76000');
+        const defaultZone = findZoneBySector(sectors, defaultSectorSlug);
         setSelectedZone(defaultZone);
       }
       return;
@@ -61,12 +71,12 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
         const correspondingZone = findZoneBySector(sectors, sectorFromUrl);
         setSelectedZone(correspondingZone);
       } else {
-        setFilters(prev => ({ ...prev, sector: '76000' }));
+        setFilters(prev => ({ ...prev, sector: defaultSectorSlug }));
       }
     } else {
       setFilters(prev => ({ ...prev, sector: sectorFromUrl }));
     }
-  }, [initialSector, sectors]);
+  }, [initialSector, sectors, defaultSectorSlug]);
 
   const { localOpenPizzerias, nearbyOpenPizzerias, closedPizzerias } = useMemo(() => {
     let filtered = pizzerias.filter(pizzeria => {
@@ -86,10 +96,9 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
 
     filtered.forEach(pizzeria => {
       const pizzeriaPostalCode = extractPostalCode(pizzeria.address);
-      const rouenPostalCodes = ['76000', '76100'];
-      const isRouenSector = rouenPostalCodes.includes(sectorPostalCode);
-      const isLocal = isRouenSector
-        ? rouenPostalCodes.includes(pizzeriaPostalCode || '')
+      const isMainSector = mainPostalCodes.includes(sectorPostalCode);
+      const isLocal = isMainSector
+        ? mainPostalCodes.includes(pizzeriaPostalCode || '')
         : pizzeriaPostalCode === sectorPostalCode;
       const pizzeriaOpen = pizzeria.openingHours ? isOpen(parseOpeningHours(pizzeria.openingHours)) : false;
 
@@ -98,7 +107,7 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
       } else if (!isLocal && pizzeriaOpen) {
         nearbyOpen.push(pizzeria);
       } else {
-        const shouldShowClosed = isRouenSector ? rouenPostalCodes.includes(pizzeriaPostalCode || '') : true;
+        const shouldShowClosed = isMainSector ? mainPostalCodes.includes(pizzeriaPostalCode || '') : true;
         if (shouldShowClosed) {
           closed.push(pizzeria);
         }
@@ -122,15 +131,14 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
       nearbyOpenPizzerias: sortPizzerias([...nearbyOpen]),
       closedPizzerias: sortPizzerias([...closed]),
     };
-  }, [activeTab, filters, pizzerias, sectors]);
+  }, [activeTab, filters, pizzerias, sectors, mainPostalCodes]);
 
   const top10Pizzerias = useMemo(() => {
-    const rouenPostalCodes = ['76000', '76100'];
-    const rouenPizzerias = pizzerias.filter(pizzeria => {
+    const mainPizzerias = pizzerias.filter(pizzeria => {
       const pc = extractPostalCode(pizzeria.address);
-      return rouenPostalCodes.includes(pc || '');
+      return mainPostalCodes.includes(pc || '');
     });
-    const sorted = rouenPizzerias.sort((a, b) => {
+    const sorted = mainPizzerias.sort((a, b) => {
       const priorityOrder: Record<string, number> = { niveau_2: 300, niveau_1: 200, normal: 100 };
       const aPriority = priorityOrder[a.priorityLevel] || 100;
       const bPriority = priorityOrder[b.priorityLevel] || 100;
@@ -144,7 +152,7 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
       return (b.rating || 0) - (a.rating || 0);
     });
     return sorted.slice(0, 10);
-  }, [pizzerias]);
+  }, [pizzerias, mainPostalCodes]);
 
   const mapFilteredPizzerias = useMemo(() => {
     if (filters.showTop10) return top10Pizzerias;
@@ -175,129 +183,166 @@ export default function HomePageClient({ pizzerias, sectors, initialSector }: Ho
         pizzerias={pizzerias}
       />
 
-      <div className="max-w-7xl mx-auto py-0 px-0">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Map toggle */}
+        {viewMode === 'list' && mapFilteredPizzerias.length > 0 && (
+          <div className="flex justify-center mb-6">
+            <button
+              onClick={() => setViewMode('map')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              <Map className="h-4 w-4" />
+              Voir sur la carte
+            </button>
+          </div>
+        )}
+
+        {/* Map view */}
         {viewMode === 'map' && (
           <div className="mb-8">
-            <div className="justify-end mb-2 pt-[3px] flex flex-col">
-              <Button variant="ghost" size="sm" onClick={() => setViewMode('list')} className="bg-secondary text-primary text-lg">
-                <X className="h-4 w-4 mr-1" />
+            <div className="flex justify-end mb-3">
+              <button
+                onClick={() => setViewMode('list')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                <X className="h-4 w-4" />
                 Fermer la carte
-              </Button>
+              </button>
             </div>
             <PizzeriaMap
               pizzerias={mapFilteredPizzerias}
-              center={selectedZone ? [selectedZone.center.lat, selectedZone.center.lng] : [49.4432, 1.0999]}
+              center={selectedZone ? [selectedZone.center.lat, selectedZone.center.lng] : centerCoords}
               zoom={selectedZone ? 14 : 13}
             />
           </div>
         )}
 
+        {/* Halal empty state */}
         {filters.halalOnly && !hasLocalOpenHalalPizzerias && (
-          <div className="flex justify-center mb-6 py-4">
-            <div className="bg-amber-100 border border-amber-300 text-amber-800 px-6 py-3 rounded-lg shadow-sm text-center">
-              <p className="font-medium text-base">Aucune pizzeria Halal ouverte en ce moment</p>
-              <p className="text-sm mt-1 text-amber-700">Les pizzerias Halal fermées sont affichées ci-dessous</p>
+          <div className="flex justify-center mb-8">
+            <div className="bg-amber-50 border border-amber-200 text-amber-900 px-6 py-4 rounded-lg text-center max-w-md">
+              <p className="font-semibold text-sm">Aucune pizzeria Halal ouverte en ce moment</p>
+              <p className="text-xs mt-1 text-amber-700">Les pizzerias Halal fermées sont affichées ci-dessous</p>
             </div>
           </div>
         )}
 
-        {viewMode === 'list' && mapFilteredPizzerias.length > 0 && (
-          <div className="flex justify-center mb-6 py-0 pt-[8px] pb-[3px] bg-inherit">
-            <Button variant="outline" onClick={() => setViewMode('map')} className="flex items-center gap-2 bg-secondary-foreground text-primary-foreground text-lg">
-              <ArrowRight className="h-4 w-4" />
-              Afficher la carte
-            </Button>
-          </div>
-        )}
-
+        {/* Top 10 section — when filter active */}
         {filters.showTop10 && top10Pizzerias.length > 0 && (
-          <div className="mb-12">
-            <div className="py-6 rounded-xl mb-6 px-0">
-              <div className="text-center flex items-center justify-center gap-2">
-                <p className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 text-white font-bold shadow-md m-0 text-lg">
-                  {top10Pizzerias.length}
-                </p>
-                <h2 className="md:text-xl font-bold m-0 text-xl text-primary">Meilleures Pizzerias à Rouen</h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mb-10">
+            <SectionHeader
+              count={top10Pizzerias.length}
+              title={`Meilleures Pizzerias à ${cityName}`}
+              variant="gold"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Local open pizzerias */}
         {localOpenPizzerias.length > 0 && (
-          <div className="mb-12 px-[10px] bg-inherit">
-            <div className="py-6 px-4 pt-[24px] bg-inherit">
-              <div className="text-center flex items-center justify-center gap-2">
-                <p className="inline-flex items-center justify-center w-8 h-8 rounded-full text-white font-bold shadow-md m-0 bg-[#1cb60b] text-xl">
-                  {localOpenPizzerias.length}
-                </p>
-                <h2 className="text-lg font-bold m-0 text-primary md:text-3xl">
-                  Pizzeria{localOpenPizzerias.length > 1 ? 's' : ''} Ouverte{localOpenPizzerias.length > 1 ? 's' : ''} Actuellement
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mb-10">
+            <SectionHeader
+              count={localOpenPizzerias.length}
+              title={`Pizzeria${localOpenPizzerias.length > 1 ? 's' : ''} Ouverte${localOpenPizzerias.length > 1 ? 's' : ''} Actuellement`}
+              variant="green"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {localOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Top 10 section — when filter NOT active */}
         {!filters.showTop10 && top10Pizzerias.length > 0 && (
-          <div className="mb-12">
-            <div className="py-6 rounded-xl mb-6 px-0">
-              <div className="text-center flex items-center justify-center gap-2">
-                <p className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 text-white font-bold text-base shadow-md m-0">
-                  {top10Pizzerias.length}
-                </p>
-                <h2 className="md:text-xl font-bold m-0 text-primary text-xl">Meilleures Pizzerias à Rouen</h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mb-10">
+            <SectionHeader
+              count={top10Pizzerias.length}
+              title={`Meilleures Pizzerias à ${cityName}`}
+              variant="gold"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Nearby open pizzerias */}
         {nearbyOpenPizzerias.length > 0 && (
-          <div className="mb-12">
-            <div className="bg-blue-100 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 py-6 px-4 mb-6 shadow-sm border-0 rounded-xl">
-              <div className="text-center flex items-center justify-center gap-2">
-                <p className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-base shadow-md m-0">
-                  {nearbyOpenPizzerias.length}
-                </p>
-                <h2 className="text-lg md:text-xl font-bold text-blue-900 dark:text-blue-100 m-0">
-                  Pizzeria{nearbyOpenPizzerias.length > 1 ? 's' : ''} Ouverte{nearbyOpenPizzerias.length > 1 ? 's' : ''} à Proximité
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mb-10">
+            <SectionHeader
+              count={nearbyOpenPizzerias.length}
+              title={`Pizzeria${nearbyOpenPizzerias.length > 1 ? 's' : ''} Ouverte${nearbyOpenPizzerias.length > 1 ? 's' : ''} à Proximité`}
+              variant="blue"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {nearbyOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
             </div>
-          </div>
+          </section>
         )}
 
+        {/* Closed pizzerias */}
         {closedPizzerias.length > 0 && (
-          <div className="mb-12">
-            <div className="bg-gray-100 dark:bg-gray-900/30 border-2 border-gray-200 dark:border-gray-700 py-6 px-4 rounded-xl mb-6 shadow-sm">
-              <div className="text-center flex items-center justify-center gap-2">
-                <p className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-500 text-white font-bold text-base shadow-md m-0">
-                  {closedPizzerias.length}
-                </p>
-                <h2 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100 m-0">
-                  Pizzeria{closedPizzerias.length > 1 ? 's' : ''} Fermée{closedPizzerias.length > 1 ? 's' : ''}
-                </h2>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <section className="mb-10">
+            <SectionHeader
+              count={closedPizzerias.length}
+              title={`Pizzeria${closedPizzerias.length > 1 ? 's' : ''} Fermée${closedPizzerias.length > 1 ? 's' : ''}`}
+              variant="gray"
+            />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
               {closedPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
             </div>
-          </div>
+          </section>
         )}
 
         {localOpenPizzerias.length === 0 && nearbyOpenPizzerias.length === 0 && closedPizzerias.length === 0 && <EmptyState />}
       </div>
     </>
+  );
+}
+
+/* ─── Section header component ─── */
+
+interface SectionHeaderProps {
+  count: number;
+  title: string;
+  variant: 'green' | 'gold' | 'blue' | 'gray';
+}
+
+function SectionHeader({ count, title, variant }: SectionHeaderProps) {
+  const variantStyles = {
+    green: {
+      pill: 'bg-emerald-600 text-white',
+      border: 'border-emerald-600',
+    },
+    gold: {
+      pill: 'bg-amber-500 text-white',
+      border: 'border-amber-500',
+    },
+    blue: {
+      pill: 'bg-blue-600 text-white',
+      border: 'border-blue-600',
+    },
+    gray: {
+      pill: 'bg-gray-400 text-white',
+      border: 'border-gray-400',
+    },
+  };
+
+  const style = variantStyles[variant];
+
+  return (
+    <div className="flex items-center gap-3 mb-5 pb-3 border-b border-border">
+      <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${style.pill}`}>
+        {count}
+      </span>
+      <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
+        {title}
+      </h2>
+    </div>
   );
 }

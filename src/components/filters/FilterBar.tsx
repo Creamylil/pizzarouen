@@ -1,6 +1,5 @@
 'use client';
 
-import { Checkbox } from '@/components/ui/checkbox';
 import type { Filters } from '@/types/pizzeria';
 
 interface FilterBarProps {
@@ -24,44 +23,38 @@ export default function FilterBar({ filters, onLocalFiltersChange }: FilterBarPr
   };
 
   return (
-    <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
-      <div className="flex items-center gap-3 backdrop-blur-sm px-4 py-2 rounded-full shadow-md border border-white/20 hover:shadow-lg transition-all duration-200 bg-primary-foreground">
-        <Checkbox
-          id="halal-filter"
-          checked={filters.halalOnly}
-          onCheckedChange={handleHalalChange}
-          className="h-5 w-5 rounded border-2 border-gray-800 data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 data-[state=checked]:text-white transition-colors"
-        />
-        <h2
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleHalalChange(!filters.halalOnly);
-          }}
-          className="text-sm font-semibold cursor-pointer select-none text-primary"
-        >
-          Pizza Halal
-        </h2>
-      </div>
+    <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+      <button
+        onClick={() => handleHalalChange(!filters.halalOnly)}
+        className={`
+          flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+          transition-all duration-200 border cursor-pointer
+          ${filters.halalOnly
+            ? 'bg-emerald-500 text-white border-emerald-500'
+            : 'bg-transparent text-white/70 border-white/20 hover:border-white/40 hover:text-white'
+          }
+        `}
+        style={{ fontFamily: 'var(--font-body)' }}
+      >
+        <span className="text-xs">☪️</span>
+        Pizza Halal
+      </button>
 
-      <div className="flex items-center gap-3 backdrop-blur-sm px-4 py-2 rounded-full shadow-md border border-white/20 hover:shadow-lg transition-all duration-200 bg-primary-foreground">
-        <Checkbox
-          id="top10-filter"
-          checked={filters.showTop10}
-          onCheckedChange={handleTop10Change}
-          className="h-5 w-5 rounded border-2 border-gray-800 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500 data-[state=checked]:text-white transition-colors"
-        />
-        <h2
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleTop10Change(!filters.showTop10);
-          }}
-          className="text-sm font-semibold cursor-pointer select-none text-primary"
-        >
-          Top 10 Meilleures Pizzerias
-        </h2>
-      </div>
+      <button
+        onClick={() => handleTop10Change(!filters.showTop10)}
+        className={`
+          flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+          transition-all duration-200 border cursor-pointer
+          ${filters.showTop10
+            ? 'bg-amber-500 text-white border-amber-500'
+            : 'bg-transparent text-white/70 border-white/20 hover:border-white/40 hover:text-white'
+          }
+        `}
+        style={{ fontFamily: 'var(--font-body)' }}
+      >
+        <span className="text-xs">🏆</span>
+        Top 10 Meilleures Pizzerias
+      </button>
     </div>
   );
 }

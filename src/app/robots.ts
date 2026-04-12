@@ -1,6 +1,9 @@
 import { MetadataRoute } from "next";
+import { fetchCityConfig } from "@/lib/data/city";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const city = await fetchCityConfig();
+
   return {
     rules: [
       {
@@ -9,6 +12,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/404"],
       },
     ],
-    sitemap: "https://pizzarouen.fr/sitemap.xml",
+    sitemap: `${city.siteUrl}/sitemap.xml`,
   };
 }

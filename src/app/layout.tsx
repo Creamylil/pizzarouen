@@ -4,61 +4,55 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Footer from "@/components/layout/Footer";
 import "./globals.css";
 import Script from "next/script";
+import { fetchCityConfig } from "@/lib/data/city";
+import { fetchGeographicSectors } from "@/lib/data/sectors";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://pizzarouen.fr"),
-  title: {
-    default: "Pizzerias Rouen - Ouvertes Maintenant | Livraison & Halal",
-    template: "%s | Pizza Rouen",
-  },
-  description:
-    "Découvrez les meilleures pizzerias de Rouen et sa région. Pizza livraison, à emporter et sur place. Horaires, avis et commande en ligne.",
-  keywords: [
-    "pizza",
-    "pizzeria",
-    "rouen",
-    "livraison pizza",
-    "pizza à emporter",
-    "restaurant italien",
-    "pizza halal",
-    "pizzeria ouverte",
-    "bihorel",
-    "petit-quevilly",
-    "grand-quevilly",
-    "sotteville",
-  ],
-  authors: [{ name: "Pizza Rouen" }],
-  openGraph: {
-    type: "website",
-    locale: "fr_FR",
-    title: "Pizzerias Rouen - Ouvertes Maintenant | Livraison & Halal",
-    description:
-      "Découvrez les meilleures pizzerias de Rouen et sa région. Pizza livraison, à emporter et sur place.",
-    siteName: "Pizza Rouen",
-  },
-  twitter: {
-    card: "summary_large_image",
-    site: "@pizza_rouen",
-    title: "Pizzerias Rouen - Ouvertes Maintenant | Livraison & Halal",
-    description:
-      "Découvrez les meilleures pizzerias de Rouen et sa région.",
-  },
-  other: {
-    "geo.region": "FR-76",
-    "geo.placename": "Rouen",
-    "geo.position": "49.4432;1.0993",
-    ICBM: "49.4432, 1.0993",
-  },
-  icons: {
-    icon: "/lovable-uploads/6d184fab-0b61-4d6b-aefd-1e273823de65.png",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const city = await fetchCityConfig();
 
-export default function RootLayout({
+  return {
+    metadataBase: new URL(city.siteUrl),
+    title: {
+      default: city.metaTitle,
+      template: city.metaTitleTemplate,
+    },
+    description: city.metaDescription,
+    keywords: city.metaKeywords,
+    authors: [{ name: city.displayName }],
+    openGraph: {
+      type: "website",
+      locale: "fr_FR",
+      title: city.metaTitle,
+      description: city.metaDescription,
+      siteName: city.ogSiteName,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: city.metaTitle,
+      description: city.metaDescription,
+    },
+    other: {
+      "geo.region": city.geoRegion,
+      "geo.placename": city.geoPlacename,
+      "geo.position": `${city.centerLat};${city.centerLng}`,
+      ICBM: `${city.centerLat}, ${city.centerLng}`,
+    },
+    icons: {
+      icon: city.logoUrl || "/favicon.ico",
+    },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [city, sectors] = await Promise.all([
+    fetchCityConfig(),
+    fetchGeographicSectors(),
+  ]);
+
   return (
     <html lang="fr">
       <head>
@@ -66,32 +60,40 @@ export default function RootLayout({
           rel="preconnect"
           href="https://ucafalcdmkvpxynoykjt.supabase.co"
         />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link
-          rel="preload"
-          as="image"
-          href="/lovable-uploads/2f182011-29ef-45c7-9902-164fe4326b49.png"
-          fetchPriority="high"
-        />
+        {city.googleAnalyticsId && (
+          <link rel="preconnect" href="https://www.googletagmanager.com" />
+        )}
+        {city.heroImageUrl && (
+          <link
+            rel="preload"
+            as="image"
+            href={city.heroImageUrl}
+            fetchPriority="high"
+          />
+        )}
       </head>
       <body className="min-h-screen flex flex-col">
         <TooltipProvider>
           <main className="flex-1">{children}</main>
-          <Footer />
+          <Footer cityDisplayName={city.displayName} contactEmail={city.contactEmail} contactWhatsapp={city.contactWhatsapp} sectors={sectors} />
           <Toaster />
         </TooltipProvider>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-S7LT5QBQMV"
-          strategy="afterInteractive"
-        />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-S7LT5QBQMV');
-          `}
-        </Script>
+        {city.googleAnalyticsId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${city.googleAnalyticsId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${city.googleAnalyticsId}');
+              `}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

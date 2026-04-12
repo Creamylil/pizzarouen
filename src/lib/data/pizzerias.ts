@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '../supabase/server';
+import { fetchCityConfig } from './city';
 import type { Pizzeria } from '@/types/pizzeria';
 
 function transformPizzeriaData(dbPizzeria: any): Pizzeria {
@@ -34,10 +35,12 @@ function transformPizzeriaData(dbPizzeria: any): Pizzeria {
 }
 
 export async function fetchPizzerias(): Promise<Pizzeria[]> {
+  const cityConfig = await fetchCityConfig();
   const supabase = createServerSupabaseClient();
   const { data, error } = await supabase
     .from('pizzerias')
     .select('*')
+    .eq('city_id', cityConfig.id)
     .order('rating', { ascending: false });
 
   if (error) {

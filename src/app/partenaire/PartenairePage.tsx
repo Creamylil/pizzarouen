@@ -1,10 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { Check, Star, Crown, Zap } from 'lucide-react';
 
-export default function PartenairePage() {
+interface PartenairePageProps {
+  cityDisplayName: string;
+  contactEmail: string;
+  contactWhatsapp: string | null;
+}
+
+export default function PartenairePage({ cityDisplayName, contactEmail, contactWhatsapp }: PartenairePageProps) {
   const [isAnnual, setIsAnnual] = useState(false);
   const discount = 0.15;
 
@@ -66,7 +71,7 @@ export default function PartenairePage() {
             Boostez la visibilité de votre pizzeria
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Rejoignez l&apos;annuaire Pizza Rouen et touchez des milliers de clients potentiels chaque mois.
+            Rejoignez l&apos;annuaire {cityDisplayName} et touchez des milliers de clients potentiels chaque mois.
           </p>
         </div>
 
@@ -122,7 +127,7 @@ export default function PartenairePage() {
                 ))}
               </ul>
               <a
-                href="mailto:contact@pizzarouen.fr"
+                href={`mailto:${contactEmail}`}
                 className={`w-full block text-center py-3 rounded-xl font-semibold transition-all ${
                   plan.popular
                     ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600'
@@ -136,8 +141,10 @@ export default function PartenairePage() {
         </div>
 
         <div className="text-center mt-12 text-gray-600">
-          <p>Des questions ? Contactez-nous à <strong>contact@pizzarouen.fr</strong></p>
-          <p className="mt-2">ou par WhatsApp au <strong>+33 7 67 02 81 61</strong></p>
+          <p>Des questions ? Contactez-nous à <strong>{contactEmail}</strong></p>
+          {contactWhatsapp && (
+            <p className="mt-2">ou par WhatsApp au <strong>{contactWhatsapp}</strong></p>
+          )}
         </div>
       </div>
     </div>

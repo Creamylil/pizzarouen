@@ -1,4 +1,5 @@
 import type { Pizzeria } from '@/types/pizzeria';
+import type { CityConfig } from '@/types/city';
 
 // --- Composant serveur pour rendre le JSON-LD ---
 
@@ -71,33 +72,33 @@ export function parseOpeningHoursToSchema(openingHours?: string): Record<string,
 
 // --- Générateurs de schémas ---
 
-export function generateWebSiteSchema() {
+export function generateWebSiteSchema(city: CityConfig) {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'Pizza Rouen',
-    url: 'https://pizzarouen.fr',
-    description: 'Annuaire des meilleures pizzerias de Rouen et sa région',
+    name: city.displayName,
+    url: city.siteUrl,
+    description: city.metaDescription,
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://pizzarouen.fr/?sector={search_term_string}',
+      target: `${city.siteUrl}/?sector={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   };
 }
 
-export function generateOrganizationSchema() {
+export function generateOrganizationSchema(city: CityConfig) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Pizza Rouen',
-    url: 'https://pizzarouen.fr',
-    logo: 'https://pizzarouen.fr/lovable-uploads/6d184fab-0b61-4d6b-aefd-1e273823de65.png',
+    name: city.displayName,
+    url: city.siteUrl,
+    ...(city.logoUrl ? { logo: `${city.siteUrl}${city.logoUrl}` } : {}),
     sameAs: [],
   };
 }
 
-export function generateItemListSchema(pizzerias: Pizzeria[], listName: string) {
+export function generateItemListSchema(pizzerias: Pizzeria[], listName: string, city: CityConfig) {
   const items = pizzerias.slice(0, 30);
   return {
     '@context': 'https://schema.org',
@@ -112,8 +113,8 @@ export function generateItemListSchema(pizzerias: Pizzeria[], listName: string) 
         address: {
           '@type': 'PostalAddress',
           streetAddress: p.address,
-          addressLocality: 'Rouen',
-          addressRegion: 'Normandie',
+          addressLocality: city.name,
+          addressRegion: city.addressRegion,
           addressCountry: 'FR',
         },
       };
@@ -149,7 +150,7 @@ export function generateItemListSchema(pizzerias: Pizzeria[], listName: string) 
   };
 }
 
-export function generateRestaurantSchema(pizzeria: Pizzeria, url: string) {
+export function generateRestaurantSchema(pizzeria: Pizzeria, url: string, city: CityConfig) {
   const schema: Record<string, unknown> = {
     '@context': 'https://schema.org',
     '@type': 'Restaurant',
@@ -159,8 +160,8 @@ export function generateRestaurantSchema(pizzeria: Pizzeria, url: string) {
     address: {
       '@type': 'PostalAddress',
       streetAddress: pizzeria.address,
-      addressLocality: 'Rouen',
-      addressRegion: 'Normandie',
+      addressLocality: city.name,
+      addressRegion: city.addressRegion,
       addressCountry: 'FR',
     },
   };

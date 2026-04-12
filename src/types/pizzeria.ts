@@ -30,6 +30,8 @@ export interface GeographicSector {
   center_lng: number;
   radius: number;
   postal_code?: string;
+  display_name?: string;
+  display_order?: number;
   created_at: string;
   updated_at: string;
 }

@@ -14,11 +14,139 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          id: string
+          slug: string
+          name: string
+          display_name: string
+          domain: string
+          site_url: string
+          center_lat: number
+          center_lng: number
+          default_zoom: number
+          geo_region: string
+          geo_placename: string
+          address_region: string
+          default_sector_slug: string
+          main_postal_codes: string[]
+          meta_title: string
+          meta_title_template: string
+          meta_description: string
+          meta_keywords: string[]
+          og_site_name: string
+          google_analytics_id: string | null
+          contact_email: string
+          contact_whatsapp: string | null
+          logo_url: string | null
+          hero_image_url: string | null
+          editor_name: string
+          seo_content: Json | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          slug: string
+          name: string
+          display_name: string
+          domain: string
+          site_url: string
+          center_lat: number
+          center_lng: number
+          default_zoom?: number
+          geo_region: string
+          geo_placename: string
+          address_region: string
+          default_sector_slug: string
+          main_postal_codes: string[]
+          meta_title: string
+          meta_title_template: string
+          meta_description: string
+          meta_keywords: string[]
+          og_site_name: string
+          google_analytics_id?: string | null
+          contact_email: string
+          contact_whatsapp?: string | null
+          logo_url?: string | null
+          hero_image_url?: string | null
+          editor_name: string
+          seo_content?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          slug?: string
+          name?: string
+          display_name?: string
+          domain?: string
+          site_url?: string
+          center_lat?: number
+          center_lng?: number
+          default_zoom?: number
+          geo_region?: string
+          geo_placename?: string
+          address_region?: string
+          default_sector_slug?: string
+          main_postal_codes?: string[]
+          meta_title?: string
+          meta_title_template?: string
+          meta_description?: string
+          meta_keywords?: string[]
+          og_site_name?: string
+          google_analytics_id?: string | null
+          contact_email?: string
+          contact_whatsapp?: string | null
+          logo_url?: string | null
+          hero_image_url?: string | null
+          editor_name?: string
+          seo_content?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      city_redirects: {
+        Row: {
+          id: string
+          city_id: string
+          source_path: string
+          destination_path: string
+          permanent: boolean
+        }
+        Insert: {
+          id?: string
+          city_id: string
+          source_path: string
+          destination_path: string
+          permanent?: boolean
+        }
+        Update: {
+          id?: string
+          city_id?: string
+          source_path?: string
+          destination_path?: string
+          permanent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_redirects_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       geographic_sectors: {
         Row: {
           center_lat: number
           center_lng: number
+          city_id: string
           created_at: string
+          display_name: string | null
+          display_order: number
           id: string
           name: string
           postal_code: string | null
@@ -29,7 +157,10 @@ export type Database = {
         Insert: {
           center_lat: number
           center_lng: number
+          city_id: string
           created_at?: string
+          display_name?: string | null
+          display_order?: number
           id?: string
           name: string
           postal_code?: string | null
@@ -40,7 +171,10 @@ export type Database = {
         Update: {
           center_lat?: number
           center_lng?: number
+          city_id?: string
           created_at?: string
+          display_name?: string | null
+          display_order?: number
           id?: string
           name?: string
           postal_code?: string | null
@@ -48,7 +182,15 @@ export type Database = {
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "geographic_sectors_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       kebabs: {
         Row: {
@@ -135,6 +277,7 @@ export type Database = {
         Row: {
           address: string
           category: string | null
+          city_id: string
           created_at: string
           description: string | null
           geocoded_at: string | null
@@ -161,6 +304,7 @@ export type Database = {
         Insert: {
           address: string
           category?: string | null
+          city_id: string
           created_at?: string
           description?: string | null
           geocoded_at?: string | null
@@ -187,6 +331,7 @@ export type Database = {
         Update: {
           address?: string
           category?: string | null
+          city_id?: string
           created_at?: string
           description?: string | null
           geocoded_at?: string | null
@@ -210,7 +355,15 @@ export type Database = {
           subcategory?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pizzerias_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_roles: {
         Row: {

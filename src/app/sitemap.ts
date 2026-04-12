@@ -1,7 +1,9 @@
 import { MetadataRoute } from "next";
+import { fetchCityConfig } from "@/lib/data/city";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://pizzarouen.fr";
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const city = await fetchCityConfig();
+  const baseUrl = city.siteUrl;
   const now = new Date();
 
   return [
@@ -12,36 +14,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/bihorel`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/sotteville-les-rouen`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/le-petit-quevilly`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/le-grand-quevilly`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/deville-les-rouen`,
-      lastModified: now,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
       url: `${baseUrl}/partenaire`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -49,6 +21,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/conditions-generales`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/mentions-legales`,
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.3,

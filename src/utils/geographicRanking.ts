@@ -2,7 +2,7 @@ import { Pizzeria } from '@/types/pizzeria';
 import { GeographicSector } from '@/types/pizzeria';
 import { haversineDistance } from './distanceCalculator';
 import { parseOpeningHours, isOpen } from './openingHours';
-import { extractPostalCode, isPizzeriaLocal } from './postalCodeUtils';
+import { isPizzeriaLocal } from './postalCodeUtils';
 
 export interface ZoneDefinition {
   id: string;
@@ -23,48 +23,16 @@ export function sectorToZone(sector: GeographicSector): ZoneDefinition {
 export function matchesSectorLogic(address: string, sectorSlug: string, sectors?: GeographicSector[]): boolean {
   if (!sectorSlug) return true;
 
-  const addressLower = address.toLowerCase();
-
   if (sectors) {
     const sector = sectors.find(s => s.slug === sectorSlug || s.postal_code === sectorSlug);
     if (sector && sector.postal_code) {
-      const sectorPostalCode = sector.postal_code;
-
-      if (sectorPostalCode === '76000') {
-        const hasCorrectPostalCode = isPizzeriaLocal(address, '76000');
-        const isRouenButNot76100 = addressLower.includes('rouen') && !addressLower.includes('76100');
-        return hasCorrectPostalCode || isRouenButNot76100;
-      }
-
-      if (sectorPostalCode === '76100') {
-        return isPizzeriaLocal(address, '76100');
-      }
-
-      return isPizzeriaLocal(address, sectorPostalCode);
+      return isPizzeriaLocal(address, sector.postal_code);
     }
   }
 
-  if (sectorSlug === '76000') {
-    return addressLower.includes('76000') ||
-           (addressLower.includes('rouen') && !addressLower.includes('76100'));
-  }
-
-  if (sectorSlug === '76100') {
-    return addressLower.includes('76100');
-  }
-
+  const addressLower = address.toLowerCase();
   const sectorLower = sectorSlug.toLowerCase();
   return addressLower.includes(sectorLower);
-}
-
-export function isPizzeriaInZone(pizzeria: Pizzeria, zone: ZoneDefinition): boolean {
-  if (!pizzeria.latitude || !pizzeria.longitude) {
-    return false;
-  }
-
-  const pizzeriaCoords = { lat: pizzeria.latitude, lng: pizzeria.longitude };
-  const distance = haversineDistance(pizzeriaCoords, zone.center);
-  return distance <= zone.radius;
 }
 
 export function getDistanceToZone(pizzeria: Pizzeria, zone: ZoneDefinition): number {
@@ -163,14 +131,4 @@ export function rankPizzeriasByGeography(
 export function findZoneBySector(sectors: GeographicSector[], sectorSlug: string): ZoneDefinition | null {
   const sector = sectors.find(s => s.slug === sectorSlug);
   return sector ? sectorToZone(sector) : null;
-}
-
-export function findZoneByAddress(sectors: GeographicSector[], address: string): ZoneDefinition | null {
-  for (const sector of sectors) {
-    if (matchesSectorLogic(address, sector.slug, sectors)) {
-      return sectorToZone(sector);
-    }
-  }
-
-  return null;
 }
