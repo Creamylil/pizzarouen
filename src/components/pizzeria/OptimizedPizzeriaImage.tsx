@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from 'react';
 import { Pizza } from 'lucide-react';
-import { toWebP, generateSizes } from '@/utils/imageOptimization';
 
 interface OptimizedPizzeriaImageProps {
   imageUrl?: string;
@@ -23,32 +22,28 @@ export default function OptimizedPizzeriaImage({
 
   if (!imageUrl || imageError) {
     return (
-      <div className={`${className} bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center`}>
+      <div className={`${className} bg-muted flex items-center justify-center`}>
         <div className="text-center p-4">
-          <Pizza className="h-12 w-12 text-red-500 mx-auto mb-2" />
-          <p className="text-red-700 text-sm font-medium">{name}</p>
+          <Pizza className="h-10 w-10 text-muted-foreground mx-auto mb-1" />
+          <p className="text-muted-foreground text-xs font-medium">{name}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       {!imageLoaded && (
-        <div className={`${className} bg-gray-200 animate-pulse flex items-center justify-center absolute inset-0`}>
-          <div className="w-8 h-8 bg-gray-300 rounded-full animate-bounce"></div>
-        </div>
+        <div className="absolute inset-0 bg-muted animate-pulse" />
       )}
       <img
-        src={toWebP(imageUrl, 80)}
+        src={imageUrl}
         alt={`Photo de ${name}`}
-        className={`${className} transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
         onError={handleImageError}
         onLoad={handleImageLoad}
         loading="lazy"
         decoding="async"
-        sizes={generateSizes()}
-        style={{ aspectRatio: '380/270' }}
       />
     </div>
   );
