@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Check, Star, Zap, Crown, TrendingUp, Users, Eye, Phone, Mail, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Check, Star, Zap, Crown, Phone, Mail, MessageCircle } from 'lucide-react';
 
 interface PartenairePageProps {
   cityName: string;
@@ -73,12 +73,6 @@ const plans = [
   },
 ];
 
-const stats = [
-  { icon: Users, value: '10 000+', label: 'visiteurs par mois' },
-  { icon: Eye, value: '50 000+', label: 'fiches consultées' },
-  { icon: TrendingUp, value: '+40%', label: 'de visibilité moyenne' },
-];
-
 export default function PartenairePage({ cityName, cityDisplayName, contactEmail, contactWhatsapp }: PartenairePageProps) {
   return (
     <div className="min-h-screen bg-white">
@@ -126,27 +120,6 @@ export default function PartenairePage({ cityName, cityDisplayName, contactEmail
           >
             Voir les formules
           </a>
-        </div>
-      </section>
-
-      {/* Social proof stats */}
-      <section className="border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 py-12">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-50 rounded-xl mb-3">
-                  <stat.icon className="w-6 h-6 text-amber-600" />
-                </div>
-                <div className="text-3xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-display)' }}>
-                  {stat.value}
-                </div>
-                <div className="text-sm text-gray-500 mt-1" style={{ fontFamily: 'var(--font-body)' }}>
-                  {stat.label}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
