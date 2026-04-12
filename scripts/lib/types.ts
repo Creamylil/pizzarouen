@@ -18,6 +18,7 @@ export interface CitySetupConfig {
   contactEmail: string;
   contactWhatsapp?: string;
   editorName: string;
+  googleAnalyticsId?: string | null;
   logoUrl?: string;
   heroImageUrl?: string;
   metaTitle?: string;

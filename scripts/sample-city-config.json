@@ -1,0 +1,16 @@
+{
+  "slug": "caen",
+  "name": "Caen",
+  "displayName": "Pizza Caen",
+  "domain": "pizzacaen.com",
+  "siteUrl": "https://pizzacaen.com",
+  "centerLat": 49.1829,
+  "centerLng": -0.3707,
+  "geoRegion": "FR-14",
+  "geoPlacename": "Caen",
+  "addressRegion": "Normandie",
+  "mainPostalCodes": ["14000"],
+  "contactEmail": "contact@pizzacaen.com",
+  "editorName": "JSD MEDIA LLP",
+  "googleAnalyticsId": null
+}

@@ -97,6 +97,7 @@ async function createCity(config: CitySetupConfig, dryRun: boolean): Promise<str
     logo_url: config.logoUrl || null,
     hero_image_url: config.heroImageUrl || null,
     editor_name: config.editorName,
+    google_analytics_id: config.googleAnalyticsId || null,
     seo_content: seo.seoContent,
   };
 
