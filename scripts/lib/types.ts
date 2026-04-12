@@ -43,6 +43,9 @@ export interface GooglePlaceResult {
   googleMapsUri?: string;
   nationalPhoneNumber?: string;
   internationalPhoneNumber?: string;
+  dineIn?: boolean;
+  takeout?: boolean;
+  delivery?: boolean;
 }
 
 export interface GoogleOpeningPeriod {
