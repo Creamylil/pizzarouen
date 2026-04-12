@@ -24,7 +24,7 @@ export default function Header({
   setFilters,
   selectedZone = null,
   onZoneSelect,
-  cityName = "Rouen",
+  cityName = "",
   sectors = [],
   pizzerias = [],
 }: HeaderProps) {

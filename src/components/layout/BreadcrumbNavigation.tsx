@@ -6,16 +6,17 @@ interface BreadcrumbNavigationProps {
     label: string;
     href?: string;
   }>;
+  siteName?: string;
 }
 
-export default function BreadcrumbNavigation({ items }: BreadcrumbNavigationProps) {
+export default function BreadcrumbNavigation({ items, siteName = "Pizza" }: BreadcrumbNavigationProps) {
   return (
     <nav className="flex items-center space-x-1 text-sm text-gray-500 mb-4">
       <Link
         href="/"
         className="flex items-center hover:text-gray-700 transition-colors font-medium"
       >
-        Pizza Rouen
+        {siteName}
       </Link>
 
       {items.map((item, index) => (
