@@ -4,6 +4,8 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import DealCard from './DealCard';
 import Timeline from './Timeline';
 import AddEventButton from './AddEventButton';
+import LogCallButton from './LogCallButton';
+import { getCommercials } from '../../actions/crm';
 
 function createCrmClient() {
   return createClient(
@@ -18,29 +20,37 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
   const supabase = createAdminSupabaseClient();
   const crmClient = createCrmClient();
 
-  const { data: pizzeria } = await supabase
-    .from('pizzerias')
-    .select('id, name, address, phone, city_id, cities(name)')
-    .eq('id', pizzeriaId)
-    .single();
+  const [pizzeriaResult, dealResult, commercials] = await Promise.all([
+    supabase
+      .from('pizzerias')
+      .select('id, name, address, phone, city_id, cities(name)')
+      .eq('id', pizzeriaId)
+      .single(),
+    crmClient
+      .from('pizzeria_deals')
+      .select('*')
+      .eq('pizzeria_id', pizzeriaId)
+      .single(),
+    getCommercials(),
+  ]);
 
+  const pizzeria = pizzeriaResult.data;
   if (!pizzeria) notFound();
 
-  const { data: deal } = await crmClient
-    .from('pizzeria_deals')
-    .select('*')
-    .eq('pizzeria_id', pizzeriaId)
-    .single();
+  const deal = dealResult.data as Record<string, unknown> | null;
 
   const { data: events } = deal
     ? await crmClient
         .from('deal_events')
         .select('*')
-        .eq('deal_id', (deal as Record<string, unknown>).id)
+        .eq('deal_id', deal.id)
         .order('created_at', { ascending: false })
     : { data: [] };
 
   const cityName = (pizzeria.cities as unknown as { name: string })?.name ?? '';
+  const assignedCommercial = deal?.assigned_to
+    ? commercials.find((c) => c.id === deal.assigned_to)
+    : null;
 
   return (
     <div className="max-w-4xl">
@@ -48,28 +58,126 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
         <h1 className="text-2xl font-bold">{pizzeria.name}</h1>
         <p className="text-gray-500">{pizzeria.address} &middot; {cityName}</p>
         {pizzeria.phone && <p className="text-gray-500">{pizzeria.phone}</p>}
+        {assignedCommercial && (
+          <p className="text-sm text-indigo-600 mt-1">
+            Commercial : {assignedCommercial.name}
+          </p>
+        )}
+        {deal && (deal.last_contact_at as string | null) && (
+          <p className="text-xs text-gray-400 mt-1">
+            Dernier contact : {new Date(deal.last_contact_at as string).toLocaleDateString('fr-FR')}
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           <DealCard
             pizzeriaId={pizzeriaId}
-            deal={deal as Record<string, unknown> | null}
+            deal={deal}
+            commercials={commercials}
           />
 
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Historique</h2>
-              {deal && (
-                <AddEventButton
-                  dealId={(deal as Record<string, unknown>).id as string}
-                  pizzeriaId={pizzeriaId}
-                />
-              )}
+              <div className="flex items-center gap-2">
+                {deal && (
+                  <>
+                    <LogCallButton
+                      dealId={deal.id as string}
+                      pizzeriaId={pizzeriaId}
+                    />
+                    <AddEventButton
+                      dealId={deal.id as string}
+                      pizzeriaId={pizzeriaId}
+                    />
+                  </>
+                )}
+              </div>
             </div>
             <Timeline events={(events as Record<string, unknown>[] | null) ?? []} />
           </div>
         </div>
+
+        {/* Sidebar info */}
+        {deal && (() => {
+          const plan = deal.pricing_plan_slug as string | null;
+          const amount = deal.monthly_amount as number | null;
+          const subStart = deal.subscription_start as string | null;
+          const subEnd = deal.subscription_end as string | null;
+          const payment = deal.payment_method as string | null;
+          const cName = deal.contact_name as string | null;
+          const cPhone = deal.contact_phone as string | null;
+          const cEmail = deal.contact_email as string | null;
+
+          return (
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-3">Résumé</h3>
+                <dl className="space-y-2 text-sm">
+                  {plan && (
+                    <>
+                      <dt className="text-gray-500">Formule</dt>
+                      <dd className="font-medium">{plan}</dd>
+                    </>
+                  )}
+                  {amount != null && amount > 0 && (
+                    <>
+                      <dt className="text-gray-500">Montant mensuel</dt>
+                      <dd className="font-medium">{amount}&euro;/mois</dd>
+                    </>
+                  )}
+                  {subStart && (
+                    <>
+                      <dt className="text-gray-500">Début</dt>
+                      <dd className="font-medium">
+                        {new Date(subStart).toLocaleDateString('fr-FR')}
+                      </dd>
+                    </>
+                  )}
+                  {subEnd && (
+                    <>
+                      <dt className="text-gray-500">Fin</dt>
+                      <dd className="font-medium">
+                        {new Date(subEnd).toLocaleDateString('fr-FR')}
+                      </dd>
+                    </>
+                  )}
+                  {payment && payment !== 'none' && (
+                    <>
+                      <dt className="text-gray-500">Paiement</dt>
+                      <dd className="font-medium">{payment}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+
+              {(cName || cPhone || cEmail) && (
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Contact</h3>
+                  <dl className="space-y-1 text-sm">
+                    {cName && <dd className="font-medium">{cName}</dd>}
+                    {cPhone && (
+                      <dd>
+                        <a href={`tel:${cPhone}`} className="text-blue-600 hover:underline">
+                          {cPhone}
+                        </a>
+                      </dd>
+                    )}
+                    {cEmail && (
+                      <dd>
+                        <a href={`mailto:${cEmail}`} className="text-blue-600 hover:underline">
+                          {cEmail}
+                        </a>
+                      </dd>
+                    )}
+                  </dl>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ export async function upsertDeal(
   const row = {
     pizzeria_id: pizzeriaId,
     status: data.status,
+    assigned_to: data.assigned_to || null,
     pricing_plan_slug: data.pricing_plan_slug || null,
     monthly_amount: data.monthly_amount,
     subscription_start: data.subscription_start || null,
@@ -96,11 +97,93 @@ export async function addEvent(
   return { success: true };
 }
 
+export async function logCall(
+  dealId: string,
+  pizzeriaId: string,
+  note?: string
+): Promise<ActionResult> {
+  const supabase = createCrmClient();
+  const now = new Date().toISOString();
+
+  // Update last_contact_at
+  const { error: updateError } = await supabase
+    .from('pizzeria_deals')
+    .update({ last_contact_at: now, updated_at: now })
+    .eq('id', dealId);
+
+  if (updateError) return { success: false, error: updateError.message };
+
+  // Log the call event
+  const { error: eventError } = await supabase.from('deal_events').insert({
+    deal_id: dealId,
+    event_type: 'appel',
+    description: note || 'Appel passé',
+  });
+
+  if (eventError) return { success: false, error: eventError.message };
+
+  revalidatePath(`/admin/crm/${pizzeriaId}`);
+  revalidatePath('/admin/crm');
+  return { success: true };
+}
+
 export async function deleteDeal(dealId: string, pizzeriaId: string): Promise<ActionResult> {
   const supabase = createCrmClient();
   const { error } = await supabase.from('pizzeria_deals').delete().eq('id', dealId);
   if (error) return { success: false, error: error.message };
   revalidatePath(`/admin/crm/${pizzeriaId}`);
+  revalidatePath('/admin/crm');
+  return { success: true };
+}
+
+// Commercials CRUD
+export async function getCommercials() {
+  const supabase = createCrmClient();
+  const { data } = await supabase
+    .from('commercials')
+    .select('*')
+    .eq('active', true)
+    .order('name');
+  return (data as { id: string; name: string; email: string | null; phone: string | null }[] | null) ?? [];
+}
+
+export async function getAllCommercials() {
+  const supabase = createCrmClient();
+  const { data } = await supabase
+    .from('commercials')
+    .select('*')
+    .order('name');
+  return (data as { id: string; name: string; email: string | null; phone: string | null; active: boolean; created_at: string }[] | null) ?? [];
+}
+
+export async function upsertCommercial(
+  data: { name: string; email: string; phone: string },
+  existingId?: string
+): Promise<ActionResult> {
+  const supabase = createCrmClient();
+  const row = {
+    name: data.name,
+    email: data.email || null,
+    phone: data.phone || null,
+  };
+
+  if (existingId) {
+    const { error } = await supabase.from('commercials').update(row).eq('id', existingId);
+    if (error) return { success: false, error: error.message };
+  } else {
+    const { error } = await supabase.from('commercials').insert(row);
+    if (error) return { success: false, error: error.message };
+  }
+  revalidatePath('/admin/commercials');
+  revalidatePath('/admin/crm');
+  return { success: true };
+}
+
+export async function toggleCommercialActive(id: string, active: boolean): Promise<ActionResult> {
+  const supabase = createCrmClient();
+  const { error } = await supabase.from('commercials').update({ active }).eq('id', id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/commercials');
   revalidatePath('/admin/crm');
   return { success: true };
 }

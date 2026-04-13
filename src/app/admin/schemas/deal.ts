@@ -22,6 +22,7 @@ export const EVENT_TYPES = [
 
 export const dealFormSchema = z.object({
   status: z.string().min(1, 'Statut requis'),
+  assigned_to: z.string(),
   pricing_plan_slug: z.string(),
   monthly_amount: z.number().nullable(),
   subscription_start: z.string(),

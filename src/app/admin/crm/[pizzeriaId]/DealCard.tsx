@@ -29,9 +29,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 interface DealCardProps {
   pizzeriaId: string;
   deal: Record<string, unknown> | null;
+  commercials: { id: string; name: string }[];
 }
 
-export default function DealCard({ pizzeriaId, deal }: DealCardProps) {
+export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProps) {
   const router = useRouter();
   const isEdit = !!deal;
 
@@ -39,6 +40,7 @@ export default function DealCard({ pizzeriaId, deal }: DealCardProps) {
     resolver: zodResolver(dealFormSchema),
     defaultValues: {
       status: (deal?.status as string) ?? 'prospect',
+      assigned_to: (deal?.assigned_to as string) ?? '',
       pricing_plan_slug: (deal?.pricing_plan_slug as string) ?? '',
       monthly_amount: (deal?.monthly_amount as number) ?? null,
       subscription_start: (deal?.subscription_start as string) ?? '',
@@ -83,10 +85,10 @@ export default function DealCard({ pizzeriaId, deal }: DealCardProps) {
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex flex-col gap-3">
               <span>Informations commerciales</span>
               {isEdit && (
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                   {DEAL_STATUSES.map((s) => (
                     <button
                       key={s.value}
@@ -128,6 +130,25 @@ export default function DealCard({ pizzeriaId, deal }: DealCardProps) {
                 </FormItem>
               )} />
             )}
+            <FormField control={form.control} name="assigned_to" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Commercial</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Non assigné" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="none">Non assigné</SelectItem>
+                    {commercials.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )} />
             <FormField control={form.control} name="pricing_plan_slug" render={({ field }) => (
               <FormItem>
                 <FormLabel>Formule</FormLabel>
@@ -190,6 +211,7 @@ export default function DealCard({ pizzeriaId, deal }: DealCardProps) {
                     <SelectItem value="cb">Carte bancaire</SelectItem>
                     <SelectItem value="especes">Espèces</SelectItem>
                     <SelectItem value="cheque">Chèque</SelectItem>
+                    <SelectItem value="stripe">Stripe</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   CreditCard,
   ClipboardList,
+  Users,
   ExternalLink,
   LogOut,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const dataNav = [
 
 const commercialNav = [
   { title: 'Pipeline CRM', href: '/admin/crm', icon: ClipboardList },
+  { title: 'Commerciaux', href: '/admin/commercials', icon: Users },
 ];
 
 interface AdminSidebarProps {
