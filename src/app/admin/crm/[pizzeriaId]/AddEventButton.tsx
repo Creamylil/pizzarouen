@@ -31,7 +31,7 @@ interface AddEventButtonProps {
 export default function AddEventButton({ dealId, pizzeriaId }: AddEventButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [eventType, setEventType] = useState('note');
+  const [eventType, setEventType] = useState('appel');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
 
