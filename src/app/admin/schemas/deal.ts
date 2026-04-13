@@ -17,6 +17,7 @@ export const EVENT_TYPES = [
   { value: 'relance', label: 'Relance', icon: 'bell' },
   { value: 'paiement', label: 'Paiement', icon: 'credit-card' },
   { value: 'changement_statut', label: 'Changement statut', icon: 'refresh-cw' },
+  { value: 'lien_paiement', label: 'Lien de paiement', icon: 'link' },
 ] as const;
 
 export const dealFormSchema = z.object({

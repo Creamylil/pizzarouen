@@ -6,6 +6,7 @@ import NotesSection from './NotesSection';
 import Timeline from './Timeline';
 import AddEventButton from './AddEventButton';
 import LogCallButton from './LogCallButton';
+import GeneratePaymentButton from './GeneratePaymentButton';
 import { getCommercials, getNotesForDeal } from '../../actions/crm';
 
 function createCrmClient() {
@@ -97,9 +98,19 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Historique</h2>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {deal && (
                   <>
+                    {(deal.monthly_amount as number) > 0 && (deal.pricing_plan_slug as string) && (deal.pricing_plan_slug as string) !== 'none' && (
+                      <GeneratePaymentButton
+                        dealId={deal.id as string}
+                        pizzeriaId={pizzeriaId}
+                        monthlyAmount={deal.monthly_amount as number}
+                        isAnnual={(deal.is_annual as boolean) ?? false}
+                        pricingPlan={(deal.pricing_plan_slug as string) ?? ''}
+                        lastPaymentLink={(deal.last_payment_link as string | null) ?? null}
+                      />
+                    )}
                     <LogCallButton
                       dealId={deal.id as string}
                       pizzeriaId={pizzeriaId}

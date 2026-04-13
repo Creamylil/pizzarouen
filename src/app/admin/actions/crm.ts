@@ -2,9 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
+import { getStripe } from '@/lib/stripe';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import type { DealFormData, EventFormData } from '../schemas/deal';
 
 type ActionResult = { success: true } | { success: false; error: string };
+type PaymentLinkResult = { success: true; url: string } | { success: false; error: string };
 
 // CRM tables are not in generated types
 function createCrmClient() {
@@ -224,4 +227,146 @@ export async function getNotesForDeal(dealId: string) {
     .eq('deal_id', dealId)
     .order('note_date', { ascending: false });
   return (data as { id: string; deal_id: string; content: string; note_date: string; created_at: string }[] | null) ?? [];
+}
+
+// Stripe Payment Link Generation
+const PLAN_LABELS: Record<string, string> = {
+  referencement: 'Référencement',
+  priorite: 'Priorité',
+  'coup-de-coeur': 'Coup de Cœur',
+};
+
+export async function generatePaymentLink(
+  dealId: string,
+  pizzeriaId: string,
+  paymentType: 'one_time' | 'recurring'
+): Promise<PaymentLinkResult> {
+  try {
+    const crmClient = createCrmClient();
+    const adminClient = createAdminSupabaseClient();
+
+    // Fetch deal and pizzeria in parallel
+    const [dealResult, pizzeriaResult] = await Promise.all([
+      crmClient.from('pizzeria_deals').select('*').eq('id', dealId).single(),
+      adminClient.from('pizzerias').select('id, name').eq('id', pizzeriaId).single(),
+    ]);
+
+    const deal = dealResult.data as Record<string, unknown> | null;
+    const pizzeria = pizzeriaResult.data;
+
+    if (!deal) return { success: false, error: 'Deal introuvable' };
+    if (!pizzeria) return { success: false, error: 'Pizzeria introuvable' };
+
+    const monthlyAmount = deal.monthly_amount as number | null;
+    const isAnnual = deal.is_annual as boolean;
+    const pricingPlan = deal.pricing_plan_slug as string | null;
+    const contactEmail = deal.contact_email as string | null;
+    const contactName = deal.contact_name as string | null;
+
+    if (!monthlyAmount || monthlyAmount <= 0) {
+      return { success: false, error: 'Montant non défini sur le deal' };
+    }
+
+    // Calculate amount in cents
+    let amountInCents: number;
+    let description: string;
+
+    if (paymentType === 'one_time') {
+      if (isAnnual) {
+        amountInCents = Math.round(monthlyAmount * 12 * 100);
+        description = `${(monthlyAmount * 12).toFixed(2)}€ (annuel)`;
+      } else {
+        amountInCents = Math.round(monthlyAmount * 100);
+        description = `${monthlyAmount.toFixed(2)}€`;
+      }
+    } else {
+      // Recurring: always monthly
+      amountInCents = Math.round(monthlyAmount * 100);
+      description = `${monthlyAmount.toFixed(2)}€/mois`;
+    }
+
+    const planLabel = PLAN_LABELS[pricingPlan ?? ''] ?? pricingPlan ?? 'Standard';
+    const productName = `Formule ${planLabel} — ${pizzeria.name}`;
+
+    const stripe = getStripe();
+
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://pizzarouen.fr';
+
+    // Build Stripe Checkout Session params
+    const sessionParams: Record<string, unknown> = {
+      mode: paymentType === 'one_time' ? 'payment' : 'subscription',
+      currency: 'eur',
+      line_items: [
+        {
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: productName,
+              metadata: {
+                deal_id: dealId,
+                pizzeria_id: pizzeriaId,
+                pricing_plan_slug: pricingPlan ?? '',
+              },
+            },
+            unit_amount: amountInCents,
+            ...(paymentType === 'recurring'
+              ? { recurring: { interval: 'month' as const } }
+              : {}),
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        deal_id: dealId,
+        pizzeria_id: pizzeriaId,
+        pricing_plan_slug: pricingPlan ?? '',
+        payment_type: paymentType,
+      },
+      success_url: `${siteUrl}/merci?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: siteUrl,
+    };
+
+    // Pre-fill customer email if available
+    if (contactEmail) {
+      sessionParams.customer_email = contactEmail;
+    }
+
+    // Enable invoice for one-time payments (subscriptions auto-generate invoices)
+    if (paymentType === 'one_time') {
+      sessionParams.invoice_creation = { enabled: true };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const session = await stripe.checkout.sessions.create(sessionParams as any);
+
+    if (!session.url) {
+      return { success: false, error: 'Stripe n\'a pas retourné d\'URL' };
+    }
+
+    // Save the payment link on the deal
+    await crmClient
+      .from('pizzeria_deals')
+      .update({
+        last_payment_link: session.url,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', dealId);
+
+    // Log event in timeline
+    const eventDesc = `Lien de paiement généré : ${paymentType === 'one_time' ? 'Paiement unique' : 'Abonnement mensuel'} — ${description} — ${productName}${contactName ? ` (${contactName})` : ''}`;
+    await crmClient.from('deal_events').insert({
+      deal_id: dealId,
+      event_type: 'lien_paiement',
+      description: eventDesc,
+    });
+
+    revalidatePath(`/admin/crm/${pizzeriaId}`);
+    revalidatePath('/admin/crm');
+    revalidatePath('/admin/crm/fiches');
+
+    return { success: true, url: session.url };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erreur inconnue';
+    return { success: false, error: `Erreur Stripe : ${message}` };
+  }
 }

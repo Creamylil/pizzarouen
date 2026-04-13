@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Bell, CreditCard, RefreshCw, FileText } from 'lucide-react';
+import { Phone, Mail, MapPin, Bell, CreditCard, RefreshCw, FileText, Link2 } from 'lucide-react';
 
 const ICON_MAP: Record<string, typeof Phone> = {
   appel: Phone,
@@ -8,6 +8,7 @@ const ICON_MAP: Record<string, typeof Phone> = {
   paiement: CreditCard,
   changement_statut: RefreshCw,
   note: FileText,
+  lien_paiement: Link2,
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -18,6 +19,7 @@ const TYPE_LABELS: Record<string, string> = {
   paiement: 'Paiement',
   changement_statut: 'Changement statut',
   note: 'Note',
+  lien_paiement: 'Lien de paiement',
 };
 
 interface TimelineProps {
