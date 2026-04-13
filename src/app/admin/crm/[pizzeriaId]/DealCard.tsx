@@ -8,7 +8,7 @@ import { dealFormSchema, type DealFormData, DEAL_STATUSES } from '../../schemas/
 import { upsertDeal, changeStatus } from '../../actions/crm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -32,9 +32,26 @@ interface DealCardProps {
   commercials: { id: string; name: string }[];
 }
 
+function addMonths(dateStr: string, months: number): string {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+function todayStr(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
 export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProps) {
   const router = useRouter();
   const isEdit = !!deal;
+  const isAnnualFromDb = (deal?.is_annual as boolean) ?? false;
+  const monthlyFromDb = (deal?.monthly_amount as number) ?? null;
+
+  // Si annuel en DB, afficher le montant annuel (×12) dans le formulaire
+  const displayAmount = isAnnualFromDb && monthlyFromDb
+    ? Math.round(monthlyFromDb * 12 * 100) / 100
+    : monthlyFromDb;
 
   const form = useForm<DealFormData>({
     resolver: zodResolver(dealFormSchema),
@@ -42,7 +59,8 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
       status: (deal?.status as string) ?? 'prospect',
       assigned_to: (deal?.assigned_to as string) ?? '',
       pricing_plan_slug: (deal?.pricing_plan_slug as string) ?? '',
-      monthly_amount: (deal?.monthly_amount as number) ?? null,
+      monthly_amount: displayAmount,
+      is_annual: isAnnualFromDb,
       subscription_start: (deal?.subscription_start as string) ?? '',
       subscription_end: (deal?.subscription_end as string) ?? '',
       payment_method: (deal?.payment_method as string) ?? '',
@@ -52,6 +70,9 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
       notes: (deal?.notes as string) ?? '',
     },
   });
+
+  const watchIsAnnual = form.watch('is_annual');
+  const watchAmount = form.watch('monthly_amount');
 
   async function onSubmit(data: DealFormData) {
     const result = await upsertDeal(
@@ -78,6 +99,15 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
     } else {
       toast.error(result.error);
     }
+  }
+
+  function handleDuration(months: number) {
+    let start = form.getValues('subscription_start');
+    if (!start) {
+      start = todayStr();
+      form.setValue('subscription_start', start);
+    }
+    form.setValue('subscription_end', addMonths(start, months));
   }
 
   return (
@@ -168,34 +198,83 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="monthly_amount" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Montant mensuel (&euro;)</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="subscription_start" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Début abonnement</FormLabel>
-                <FormControl><Input type="date" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField control={form.control} name="subscription_end" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fin abonnement</FormLabel>
-                <FormControl><Input type="date" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+
+            {/* Montant + paiement annuel */}
+            <div className="space-y-3">
+              <FormField control={form.control} name="monthly_amount" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {watchIsAnnual ? 'Montant annuel (\u20ac)' : 'Montant mensuel (\u20ac)'}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                    />
+                  </FormControl>
+                  {watchIsAnnual && watchAmount != null && watchAmount > 0 && (
+                    <p className="text-xs text-green-600 mt-1">
+                      = {(watchAmount / 12).toFixed(2)}&euro;/mois
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="is_annual" render={({ field }) => (
+                <FormItem className="flex items-center gap-2">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="!mt-0 text-sm font-normal cursor-pointer">
+                    Paiement annuel
+                  </FormLabel>
+                </FormItem>
+              )} />
+            </div>
+
+            {/* Dates abonnement + durée rapide */}
+            <div className="space-y-3">
+              <FormField control={form.control} name="subscription_start" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Début abonnement</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormControl><Input type="date" {...field} /></FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 text-xs"
+                      onClick={() => handleDuration(6)}
+                    >
+                      6 mois
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 text-xs"
+                      onClick={() => handleDuration(12)}
+                    >
+                      1 an
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="subscription_end" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fin abonnement</FormLabel>
+                  <FormControl><Input type="date" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
             <FormField control={form.control} name="payment_method" render={({ field }) => (
               <FormItem>
                 <FormLabel>Mode de paiement</FormLabel>
@@ -244,14 +323,6 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
                 )} />
               </div>
             </div>
-
-            <FormField control={form.control} name="notes" render={({ field }) => (
-              <FormItem className="md:col-span-2">
-                <FormLabel>Notes</FormLabel>
-                <FormControl><Textarea rows={3} {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
 
             <div className="md:col-span-2">
               <Button type="submit" disabled={form.formState.isSubmitting}>

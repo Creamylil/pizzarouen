@@ -21,12 +21,18 @@ export async function upsertDeal(
   existingDealId?: string
 ): Promise<ActionResult> {
   const supabase = createCrmClient();
+  // Si paiement annuel, stocker le mensuel (÷12)
+  const monthlyAmount = data.is_annual && data.monthly_amount
+    ? Math.round((data.monthly_amount / 12) * 100) / 100
+    : data.monthly_amount;
+
   const row = {
     pizzeria_id: pizzeriaId,
     status: data.status,
     assigned_to: data.assigned_to || null,
     pricing_plan_slug: data.pricing_plan_slug || null,
-    monthly_amount: data.monthly_amount,
+    monthly_amount: monthlyAmount,
+    is_annual: data.is_annual,
     subscription_start: data.subscription_start || null,
     subscription_end: data.subscription_end || null,
     payment_method: data.payment_method || null,
@@ -190,4 +196,32 @@ export async function toggleCommercialActive(id: string, active: boolean): Promi
   revalidatePath('/admin/commercials');
   revalidatePath('/admin/crm');
   return { success: true };
+}
+
+// Deal Notes
+export async function addNote(
+  dealId: string,
+  pizzeriaId: string,
+  content: string,
+  noteDate: string
+): Promise<ActionResult> {
+  const supabase = createCrmClient();
+  const { error } = await supabase.from('deal_notes').insert({
+    deal_id: dealId,
+    content,
+    note_date: noteDate,
+  });
+  if (error) return { success: false, error: error.message };
+  revalidatePath(`/admin/crm/${pizzeriaId}`);
+  return { success: true };
+}
+
+export async function getNotesForDeal(dealId: string) {
+  const supabase = createCrmClient();
+  const { data } = await supabase
+    .from('deal_notes')
+    .select('*')
+    .eq('deal_id', dealId)
+    .order('note_date', { ascending: false });
+  return (data as { id: string; deal_id: string; content: string; note_date: string; created_at: string }[] | null) ?? [];
 }

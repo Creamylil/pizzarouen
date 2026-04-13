@@ -25,6 +25,7 @@ export const dealFormSchema = z.object({
   assigned_to: z.string(),
   pricing_plan_slug: z.string(),
   monthly_amount: z.number().nullable(),
+  is_annual: z.boolean(),
   subscription_start: z.string(),
   subscription_end: z.string(),
   payment_method: z.string(),

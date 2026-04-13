@@ -2,10 +2,11 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import DealCard from './DealCard';
+import NotesSection from './NotesSection';
 import Timeline from './Timeline';
 import AddEventButton from './AddEventButton';
 import LogCallButton from './LogCallButton';
-import { getCommercials } from '../../actions/crm';
+import { getCommercials, getNotesForDeal } from '../../actions/crm';
 
 function createCrmClient() {
   return createClient(
@@ -39,13 +40,19 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
 
   const deal = dealResult.data as Record<string, unknown> | null;
 
-  const { data: events } = deal
-    ? await crmClient
-        .from('deal_events')
-        .select('*')
-        .eq('deal_id', deal.id)
-        .order('created_at', { ascending: false })
-    : { data: [] };
+  // Fetch events and notes in parallel (only if deal exists)
+  const [eventsResult, notes] = deal
+    ? await Promise.all([
+        crmClient
+          .from('deal_events')
+          .select('*')
+          .eq('deal_id', deal.id)
+          .order('created_at', { ascending: false }),
+        getNotesForDeal(deal.id as string),
+      ])
+    : [{ data: [] }, []];
+
+  const events = eventsResult.data;
 
   const cityName = (pizzeria.cities as unknown as { name: string })?.name ?? '';
   const assignedCommercial = deal?.assigned_to
@@ -78,6 +85,15 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
             commercials={commercials}
           />
 
+          {/* Notes section — only if deal exists */}
+          {deal && (
+            <NotesSection
+              dealId={deal.id as string}
+              pizzeriaId={pizzeriaId}
+              notes={notes}
+            />
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Historique</h2>
@@ -104,6 +120,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
         {deal && (() => {
           const plan = deal.pricing_plan_slug as string | null;
           const amount = deal.monthly_amount as number | null;
+          const isAnnual = deal.is_annual as boolean | null;
           const subStart = deal.subscription_start as string | null;
           const subEnd = deal.subscription_end as string | null;
           const payment = deal.payment_method as string | null;
@@ -125,7 +142,14 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
                   {amount != null && amount > 0 && (
                     <>
                       <dt className="text-gray-500">Montant mensuel</dt>
-                      <dd className="font-medium">{amount}&euro;/mois</dd>
+                      <dd className="font-medium">
+                        {amount}&euro;/mois
+                        {isAnnual && (
+                          <span className="text-xs text-gray-400 ml-1">
+                            ({Math.round(amount * 12)}&euro;/an)
+                          </span>
+                        )}
+                      </dd>
                     </>
                   )}
                   {subStart && (
@@ -147,7 +171,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
                   {payment && payment !== 'none' && (
                     <>
                       <dt className="text-gray-500">Paiement</dt>
-                      <dd className="font-medium">{payment}</dd>
+                      <dd className="font-medium">{payment}{isAnnual ? ' (annuel)' : ''}</dd>
                     </>
                   )}
                 </dl>
