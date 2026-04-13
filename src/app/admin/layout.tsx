@@ -14,7 +14,7 @@ export default function AdminLayout({
 }) {
   return (
     <html lang="fr">
-      <body>
+      <body className="min-h-screen">
         <AdminShell>{children}</AdminShell>
         <Toaster />
       </body>
