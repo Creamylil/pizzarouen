@@ -316,6 +316,29 @@ export async function generatePaymentLink(
           quantity: 1,
         },
       ],
+      // Collecter l'adresse de facturation complète du client
+      billing_address_collection: 'required',
+      // Collecter le numéro de téléphone
+      phone_number_collection: { enabled: true },
+      // Champs personnalisés : nom de l'entreprise du client
+      custom_fields: [
+        {
+          key: 'company_name',
+          label: { type: 'custom', custom: 'Nom de l\'entreprise' },
+          type: 'text',
+          optional: true,
+        },
+        {
+          key: 'siret',
+          label: { type: 'custom', custom: 'SIRET (optionnel)' },
+          type: 'text',
+          optional: true,
+        },
+      ],
+      // Moyens de paiement : carte + virement SEPA (si activé dans Stripe Dashboard)
+      payment_method_types: paymentType === 'one_time'
+        ? ['card', 'sepa_debit', 'bancontact']
+        : ['card', 'sepa_debit'],
       metadata: {
         deal_id: dealId,
         pizzeria_id: pizzeriaId,
