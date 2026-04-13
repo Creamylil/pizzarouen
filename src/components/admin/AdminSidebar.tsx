@@ -10,6 +10,7 @@ import {
   ArrowRightLeft,
   CreditCard,
   ClipboardList,
+  Store,
   Users,
   ExternalLink,
   LogOut,
@@ -25,12 +26,22 @@ const dataNav = [
 ];
 
 const commercialNav = [
+  { title: 'Fiches commerciales', href: '/admin/crm/fiches', icon: Store },
   { title: 'Pipeline CRM', href: '/admin/crm', icon: ClipboardList },
   { title: 'Commerciaux', href: '/admin/commercials', icon: Users },
 ];
 
 interface AdminSidebarProps {
   onNavigate?: () => void;
+}
+
+function isActive(pathname: string, href: string): boolean {
+  if (pathname === href) return true;
+  // /admin/crm/fiches → only "Fiches commerciales" active
+  if (href === '/admin/crm/fiches') return pathname.startsWith('/admin/crm/fiches');
+  // /admin/crm → active for /admin/crm and /admin/crm/[uuid], but NOT /admin/crm/fiches
+  if (href === '/admin/crm') return pathname.startsWith('/admin/crm') && !pathname.startsWith('/admin/crm/fiches');
+  return pathname.startsWith(href);
 }
 
 export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
@@ -59,7 +70,7 @@ export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
         </div>
         <ul className="space-y-1 px-2">
           {dataNav.map((item) => {
-            const active = pathname.startsWith(item.href);
+            const active = isActive(pathname, item.href);
             return (
               <li key={item.href}>
                 <Link
@@ -88,7 +99,7 @@ export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
         </div>
         <ul className="space-y-1 px-2">
           {commercialNav.map((item) => {
-            const active = pathname.startsWith(item.href);
+            const active = isActive(pathname, item.href);
             return (
               <li key={item.href}>
                 <Link

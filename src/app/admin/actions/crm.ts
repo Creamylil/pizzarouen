@@ -46,6 +46,7 @@ export async function upsertDeal(
   }
   revalidatePath(`/admin/crm/${pizzeriaId}`);
   revalidatePath('/admin/crm');
+  revalidatePath('/admin/crm/fiches');
   return { success: true };
 }
 
@@ -77,6 +78,7 @@ export async function changeStatus(
 
   revalidatePath(`/admin/crm/${pizzeriaId}`);
   revalidatePath('/admin/crm');
+  revalidatePath('/admin/crm/fiches');
   return { success: true };
 }
 
@@ -124,6 +126,7 @@ export async function logCall(
 
   revalidatePath(`/admin/crm/${pizzeriaId}`);
   revalidatePath('/admin/crm');
+  revalidatePath('/admin/crm/fiches');
   return { success: true };
 }
 
@@ -133,6 +136,7 @@ export async function deleteDeal(dealId: string, pizzeriaId: string): Promise<Ac
   if (error) return { success: false, error: error.message };
   revalidatePath(`/admin/crm/${pizzeriaId}`);
   revalidatePath('/admin/crm');
+  revalidatePath('/admin/crm/fiches');
   return { success: true };
 }
 
