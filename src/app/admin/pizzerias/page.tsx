@@ -3,7 +3,7 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Star } from 'lucide-react';
+import { Plus, Pencil, Star, ClipboardList } from 'lucide-react';
 import DeletePizzeriaButton from './DeletePizzeriaButton';
 
 export default async function PizzeriasPage() {
@@ -63,7 +63,12 @@ export default async function PizzeriasPage() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button variant="ghost" size="icon" asChild title="Fiche CRM">
+                      <Link href={`/admin/crm/${p.id}`}>
+                        <ClipboardList className="h-4 w-4 text-indigo-600" />
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" asChild title="Modifier">
                       <Link href={`/admin/pizzerias/${p.id}`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
