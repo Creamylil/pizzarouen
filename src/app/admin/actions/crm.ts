@@ -335,10 +335,8 @@ export async function generatePaymentLink(
           optional: true,
         },
       ],
-      // Moyens de paiement : carte + virement SEPA (si activé dans Stripe Dashboard)
-      payment_method_types: paymentType === 'one_time'
-        ? ['card', 'sepa_debit', 'bancontact']
-        : ['card', 'sepa_debit'],
+      // Moyens de paiement : gérés automatiquement par Stripe Dashboard
+      // (pas de payment_method_types forcés — Stripe propose ceux activés dans le Dashboard)
       metadata: {
         deal_id: dealId,
         pizzeria_id: pizzeriaId,
