@@ -311,6 +311,111 @@ function haversineDistance(
 }
 
 /**
+ * Dérive le code département depuis le premier code postal
+ * Ex: "76000" → "76", "14000" → "14", "35000" → "35"
+ */
+function getDepartmentCode(mainPostalCodes: string[]): string {
+  if (mainPostalCodes.length === 0) {
+    throw new Error('mainPostalCodes est vide — impossible de dériver le département');
+  }
+  return mainPostalCodes[0].substring(0, 2);
+}
+
+interface NearbyCommune {
+  name: string;
+  population: number;
+  centerLat: number;
+  centerLng: number;
+  postalCodes: string[];
+  distanceKm: number;
+}
+
+/**
+ * Récupère les communes proches via l'API geo.api.gouv.fr
+ * Filtre par distance, population, et exclut la ville principale
+ */
+async function fetchNearbyCommunes(
+  departmentCode: string,
+  cityCenter: { lat: number; lng: number },
+  mainPostalCodes: string[],
+  maxDistanceKm = 15,
+  minPopulation = 5000,
+  maxResults = 10,
+): Promise<NearbyCommune[]> {
+  log.step(`Recherche des communes proches (dept ${departmentCode}, rayon ${maxDistanceKm}km, pop ≥ ${minPopulation.toLocaleString()})...`);
+
+  const url = `https://geo.api.gouv.fr/departements/${departmentCode}/communes?fields=nom,code,population,centre,codesPostaux&format=json`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`API geo.gouv.fr erreur: ${res.status} ${res.statusText}`);
+  }
+
+  const allCommunes = await res.json() as {
+    nom: string;
+    code: string;
+    population?: number;
+    centre?: { type: string; coordinates: [number, number] };
+    codesPostaux?: string[];
+  }[];
+
+  log.detail(`${allCommunes.length} communes dans le département ${departmentCode}`);
+
+  const mainPostalSet = new Set(mainPostalCodes);
+  const candidates: NearbyCommune[] = [];
+
+  for (const commune of allCommunes) {
+    // Skip sans données géo ou population
+    if (!commune.centre?.coordinates || !commune.population || !commune.codesPostaux?.length) {
+      continue;
+    }
+
+    // Skip la ville principale (tout code postal en commun avec mainPostalCodes)
+    if (commune.codesPostaux.some(pc => mainPostalSet.has(pc))) {
+      continue;
+    }
+
+    // Filtre population
+    if (commune.population < minPopulation) {
+      continue;
+    }
+
+    // API retourne [lng, lat] (GeoJSON)
+    const [lng, lat] = commune.centre.coordinates;
+    const distance = haversineDistance(cityCenter, { lat, lng });
+
+    // Filtre distance
+    if (distance > maxDistanceKm) {
+      continue;
+    }
+
+    candidates.push({
+      name: commune.nom,
+      population: commune.population,
+      centerLat: lat,
+      centerLng: lng,
+      postalCodes: commune.codesPostaux,
+      distanceKm: distance,
+    });
+  }
+
+  // Tri par population décroissante, puis distance
+  candidates.sort((a, b) => {
+    const popDiff = b.population - a.population;
+    return popDiff !== 0 ? popDiff : a.distanceKm - b.distanceKm;
+  });
+
+  const top = candidates.slice(0, maxResults);
+
+  log.success(`${top.length} communes retenues :`);
+  for (const c of top) {
+    log.detail(`  ${c.name} — ${c.population.toLocaleString()} hab, ${c.distanceKm.toFixed(1)}km, CP ${c.postalCodes.join(', ')}`);
+  }
+
+  return top;
+}
+
+/**
  * Résout un code postal en nom de commune via l'API geo.api.gouv.fr
  */
 async function resolvePostalCodeToCommune(postalCode: string): Promise<string | null> {
@@ -318,41 +423,10 @@ async function resolvePostalCodeToCommune(postalCode: string): Promise<string | 
     const res = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postalCode}&fields=nom&format=json`);
     if (!res.ok) return null;
     const communes = await res.json() as { nom: string }[];
-    // Retourner la première commune (la principale pour ce code postal)
     return communes.length > 0 ? communes[0].nom : null;
   } catch {
     return null;
   }
-}
-
-/**
- * Résout tous les codes postaux en noms de communes (batch)
- */
-async function resolvePostalCodes(postalCodes: string[], mainPostalCodes: string[], cityName: string): Promise<Map<string, string>> {
-  const mapping = new Map<string, string>();
-
-  log.step('Résolution des noms de communes via API gouv.fr...');
-
-  for (const pc of postalCodes) {
-    // Les codes postaux principaux de la ville → nom de la ville directement
-    if (mainPostalCodes.includes(pc)) {
-      mapping.set(pc, cityName);
-      log.detail(`${pc} → ${cityName} (ville principale)`);
-      continue;
-    }
-
-    const communeName = await resolvePostalCodeToCommune(pc);
-    if (communeName) {
-      mapping.set(pc, communeName);
-      log.detail(`${pc} → ${communeName}`);
-    } else {
-      // Fallback : utiliser le code postal comme nom
-      mapping.set(pc, pc);
-      log.warn(`${pc} → pas de commune trouvée, utilisation du code postal`);
-    }
-  }
-
-  return mapping;
 }
 
 async function createSectors(
@@ -361,87 +435,157 @@ async function createSectors(
   pizzeriasData: { postalCode: string; lat: number; lng: number; name: string }[],
   dryRun: boolean,
 ): Promise<number> {
-  log.step('Création des secteurs géographiques...');
-
-  if (pizzeriasData.length === 0) {
-    log.warn('Aucune pizzeria géolocalisée → pas de secteurs créés');
-    return 0;
-  }
-
-  // Grouper par code postal
-  const byPostalCode = new Map<string, { lat: number; lng: number; name: string }[]>();
-  for (const p of pizzeriasData) {
-    const existing = byPostalCode.get(p.postalCode) || [];
-    existing.push(p);
-    byPostalCode.set(p.postalCode, existing);
-  }
+  log.step('Création des secteurs géographiques (découverte proactive)...');
 
   const supabase = createAdminClient();
 
   // Vérifier secteurs existants
   const { data: existingSectors } = await supabase
     .from('geographic_sectors')
-    .select('postal_code')
+    .select('postal_code, slug')
     .eq('city_id', cityId);
 
   const existingPostalCodes = new Set(
-    (existingSectors || []).map((s) => s.postal_code),
+    (existingSectors || []).flatMap(s => s.postal_code ? [s.postal_code] : []),
+  );
+  const existingSlugs = new Set(
+    (existingSectors || []).map(s => s.slug),
   );
 
-  // Résoudre les noms de communes pour les nouveaux codes postaux
-  const newPostalCodes = [...byPostalCode.keys()].filter(pc => !existingPostalCodes.has(pc));
-  const communeNames = await resolvePostalCodes(newPostalCodes, config.mainPostalCodes, config.name);
+  // ── 1. Découvrir les communes proches via API gouv ────────────
+  const departmentCode = getDepartmentCode(config.mainPostalCodes);
+  const cityCenter = { lat: config.centerLat, lng: config.centerLng };
+  const nearbyCommunes = await fetchNearbyCommunes(departmentCode, cityCenter, config.mainPostalCodes);
+
+  // Compter les pizzerias par code postal
+  const pizzeriaCountByPC = new Map<string, number>();
+  for (const p of pizzeriasData) {
+    pizzeriaCountByPC.set(p.postalCode, (pizzeriaCountByPC.get(p.postalCode) || 0) + 1);
+  }
 
   const sectorInserts: any[] = [];
   let displayOrder = 1;
 
-  // Trier par nombre de pizzerias décroissant
-  const sorted = [...byPostalCode.entries()].sort((a, b) => b[1].length - a[1].length);
+  // ── 2. Secteurs ville principale (is_published = false) ───────
+  log.divider();
+  log.info('Secteurs ville principale (non publiés) :');
 
-  for (const [postalCode, pizzerias] of sorted) {
+  for (const postalCode of config.mainPostalCodes) {
     if (existingPostalCodes.has(postalCode)) {
-      log.skip(`Secteur ${postalCode} existe déjà`);
+      log.skip(`${postalCode} ${config.name} existe déjà`);
       continue;
     }
 
-    // Centroïde
-    const centerLat = pizzerias.reduce((s, p) => s + p.lat, 0) / pizzerias.length;
-    const centerLng = pizzerias.reduce((s, p) => s + p.lng, 0) / pizzerias.length;
-    const center = { lat: centerLat, lng: centerLng };
+    const slug = slugify(config.name);
+    const finalSlug = existingSlugs.has(slug) ? `${slug}-${postalCode}` : slug;
+    existingSlugs.add(finalSlug);
 
-    // Rayon = distance max × 1.2, minimum 2km
-    const maxDist = pizzerias.reduce(
-      (max, p) => Math.max(max, haversineDistance(center, { lat: p.lat, lng: p.lng })),
-      0,
-    );
-    const radius = Math.max(maxDist * 1.2, 2);
-
-    // Nom de commune résolu via API gouv.fr
-    const sectorName = communeNames.get(postalCode) || postalCode;
-    const isMainCity = config.mainPostalCodes.includes(postalCode);
-
-    // Slug : nom de commune slugifié (ex: "herouville-saint-clair")
-    const slug = slugify(sectorName);
-
-    // is_published : false pour les secteurs de la ville principale (= homepage)
-    const isPublished = !isMainCity;
+    const count = pizzeriaCountByPC.get(postalCode) || 0;
 
     sectorInserts.push({
       city_id: cityId,
-      name: sectorName,
-      slug,
-      display_name: sectorName,
+      name: config.name,
+      slug: finalSlug,
+      display_name: config.name,
       postal_code: postalCode,
-      center_lat: parseFloat(centerLat.toFixed(6)),
-      center_lng: parseFloat(centerLng.toFixed(6)),
-      radius: parseFloat(radius.toFixed(2)),
+      center_lat: config.centerLat,
+      center_lng: config.centerLng,
+      radius: 5.0,
       display_order: displayOrder++,
-      is_published: isPublished,
+      is_published: false,
     });
 
-    log.detail(`${postalCode} ${sectorName} → ${pizzerias.length} pizzerias, rayon ${radius.toFixed(1)}km${!isPublished ? ' (homepage, non publié)' : ''}`);
+    log.detail(`  ${postalCode} ${config.name} → ${count} pizzerias (homepage)`);
   }
 
+  // ── 3. Secteurs communes proches (is_published = true) ────────
+  log.divider();
+  log.info('Secteurs communes proches (publiés) :');
+
+  // Tracker tous les codes postaux couverts
+  const coveredPostalCodes = new Set(config.mainPostalCodes);
+
+  for (const commune of nearbyCommunes) {
+    const primaryPC = commune.postalCodes[0];
+
+    // Ajouter tous les CP de cette commune comme couverts
+    for (const pc of commune.postalCodes) coveredPostalCodes.add(pc);
+
+    if (existingPostalCodes.has(primaryPC)) {
+      log.skip(`${primaryPC} ${commune.name} existe déjà`);
+      continue;
+    }
+
+    const slug = slugify(commune.name);
+    const finalSlug = existingSlugs.has(slug) ? `${slug}-${primaryPC}` : slug;
+    existingSlugs.add(finalSlug);
+
+    // Compter les pizzerias sur tous les CP de cette commune
+    const count = commune.postalCodes.reduce(
+      (sum, pc) => sum + (pizzeriaCountByPC.get(pc) || 0), 0,
+    );
+
+    sectorInserts.push({
+      city_id: cityId,
+      name: commune.name,
+      slug: finalSlug,
+      display_name: commune.name,
+      postal_code: primaryPC,
+      center_lat: parseFloat(commune.centerLat.toFixed(6)),
+      center_lng: parseFloat(commune.centerLng.toFixed(6)),
+      radius: 2.0,
+      display_order: displayOrder++,
+      is_published: true,
+    });
+
+    log.detail(`  ${primaryPC} ${commune.name} → ${count} pizzerias, ${commune.population.toLocaleString()} hab, ${commune.distanceKm.toFixed(1)}km`);
+  }
+
+  // ── 4. Fallback : codes postaux de pizzerias non couverts ─────
+  const uncoveredPCs = [...pizzeriaCountByPC.keys()].filter(
+    pc => !coveredPostalCodes.has(pc) && !existingPostalCodes.has(pc),
+  );
+
+  if (uncoveredPCs.length > 0) {
+    log.divider();
+    log.info(`Secteurs fallback (${uncoveredPCs.length} codes postaux non couverts) :`);
+
+    for (const postalCode of uncoveredPCs) {
+      const communeName = await resolvePostalCodeToCommune(postalCode);
+      const name = communeName || postalCode;
+
+      const slug = slugify(name);
+      const finalSlug = existingSlugs.has(slug) ? `${slug}-${postalCode}` : slug;
+      existingSlugs.add(finalSlug);
+
+      // Centroïde depuis les pizzerias
+      const pizzerias = pizzeriasData.filter(p => p.postalCode === postalCode);
+      const centerLat = pizzerias.reduce((s, p) => s + p.lat, 0) / pizzerias.length;
+      const centerLng = pizzerias.reduce((s, p) => s + p.lng, 0) / pizzerias.length;
+      const center = { lat: centerLat, lng: centerLng };
+      const maxDist = pizzerias.reduce(
+        (max, p) => Math.max(max, haversineDistance(center, { lat: p.lat, lng: p.lng })), 0,
+      );
+      const radius = Math.max(maxDist * 1.2, 2);
+
+      sectorInserts.push({
+        city_id: cityId,
+        name,
+        slug: finalSlug,
+        display_name: name,
+        postal_code: postalCode,
+        center_lat: parseFloat(centerLat.toFixed(6)),
+        center_lng: parseFloat(centerLng.toFixed(6)),
+        radius: parseFloat(radius.toFixed(2)),
+        display_order: displayOrder++,
+        is_published: true,
+      });
+
+      log.detail(`  ${postalCode} ${name} → ${pizzerias.length} pizzerias (fallback)`);
+    }
+  }
+
+  // ── 5. Insérer en base ────────────────────────────────────────
   if (sectorInserts.length > 0 && !dryRun) {
     const { error } = await supabase.from('geographic_sectors').insert(sectorInserts);
     if (error) {
