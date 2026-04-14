@@ -15,9 +15,10 @@ import { DEAL_STATUSES } from '../schemas/deal';
 interface PipelineFiltersProps {
   cities: { id: string; name: string }[];
   commercials: { id: string; name: string }[];
+  isCommercial?: boolean;
 }
 
-export default function PipelineFilters({ cities, commercials }: PipelineFiltersProps) {
+export default function PipelineFilters({ cities, commercials, isCommercial }: PipelineFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -68,18 +69,20 @@ export default function PipelineFilters({ cities, commercials }: PipelineFilters
         </SelectContent>
       </Select>
 
-      <Select value={currentCommercial || 'all'} onValueChange={(v) => updateFilter('commercial', v)}>
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Tous les commerciaux" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tous les commerciaux</SelectItem>
-          <SelectItem value="unassigned">Non assigné</SelectItem>
-          {commercials.map((c) => (
-            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {!isCommercial && (
+        <Select value={currentCommercial || 'all'} onValueChange={(v) => updateFilter('commercial', v)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tous les commerciaux" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les commerciaux</SelectItem>
+            <SelectItem value="unassigned">Non assigné</SelectItem>
+            {commercials.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={clearFilters}>

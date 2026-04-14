@@ -1,8 +1,11 @@
 import { notFound } from 'next/navigation';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth/require-role';
 import PizzeriaForm from '../PizzeriaForm';
 
 export default async function EditPizzeriaPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
+
   const { id } = await params;
   const supabase = createAdminSupabaseClient();
 

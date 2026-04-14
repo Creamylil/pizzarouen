@@ -8,6 +8,7 @@ import { DEAL_STATUSES } from '../schemas/deal';
 import { getCommercials } from '../actions/crm';
 import { ExternalLink, Phone } from 'lucide-react';
 import PipelineFilters from './PipelineFilters';
+import { requireAuth } from '@/lib/auth/require-role';
 
 function createCrmClient() {
   return createClient(
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export default async function CrmPage({ searchParams }: Props) {
+  const session = await requireAuth();
   const filters = await searchParams;
   const crmClient = createCrmClient();
   const supabase = createAdminSupabaseClient();
@@ -62,8 +64,14 @@ export default async function CrmPage({ searchParams }: Props) {
     };
   });
 
+  // Role-based visibility: restricted commercials only see their own deals
+  const isRestrictedCommercial = session.role === 'commercial' && !session.commercial?.can_see_all_deals;
+  const visibleDeals = isRestrictedCommercial
+    ? allDeals.filter((d) => d.assigned_to === session.commercial!.id)
+    : allDeals;
+
   // Apply filters
-  let filteredDeals = allDeals;
+  let filteredDeals = visibleDeals;
   if (filters.city) {
     filteredDeals = filteredDeals.filter((d) => d.city_id === filters.city);
   }
@@ -113,6 +121,7 @@ export default async function CrmPage({ searchParams }: Props) {
         <PipelineFilters
           cities={(cities ?? []).map((c) => ({ id: c.id, name: c.name }))}
           commercials={commercials}
+          isCommercial={isRestrictedCommercial}
         />
       </div>
 

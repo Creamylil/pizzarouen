@@ -166,27 +166,62 @@ export async function getAllCommercials() {
     .from('commercials')
     .select('*')
     .order('name');
-  return (data as { id: string; name: string; email: string | null; phone: string | null; active: boolean; created_at: string }[] | null) ?? [];
+  return (data as {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    active: boolean;
+    created_at: string;
+    user_id: string | null;
+    can_see_all_deals: boolean;
+    commission_month1_rate: number | null;
+    commission_recurring_rate: number | null;
+    commission_duration_months: number | null;
+  }[] | null) ?? [];
 }
 
 export async function upsertCommercial(
-  data: { name: string; email: string; phone: string },
+  data: {
+    name: string;
+    email: string;
+    phone: string;
+    user_id: string;
+    can_see_all_deals: boolean;
+    commission_month1_rate: number | null;
+    commission_recurring_rate: number | null;
+    commission_duration_months: number | null;
+  },
   existingId?: string
 ): Promise<ActionResult> {
-  const supabase = createCrmClient();
+  const crmClient = createCrmClient();
   const row = {
     name: data.name,
     email: data.email || null,
     phone: data.phone || null,
+    user_id: data.user_id || null,
+    can_see_all_deals: data.can_see_all_deals,
+    commission_month1_rate: data.commission_month1_rate,
+    commission_recurring_rate: data.commission_recurring_rate,
+    commission_duration_months: data.commission_duration_months,
   };
 
   if (existingId) {
-    const { error } = await supabase.from('commercials').update(row).eq('id', existingId);
+    const { error } = await crmClient.from('commercials').update(row).eq('id', existingId);
     if (error) return { success: false, error: error.message };
   } else {
-    const { error } = await supabase.from('commercials').insert(row);
+    const { error } = await crmClient.from('commercials').insert(row);
     if (error) return { success: false, error: error.message };
   }
+
+  // Assign 'commercial' role in user_roles if user_id is provided
+  if (data.user_id) {
+    await crmClient.from('user_roles').upsert(
+      { user_id: data.user_id, role: 'commercial' },
+      { onConflict: 'user_id,role' }
+    );
+  }
+
   revalidatePath('/admin/commercials');
   revalidatePath('/admin/crm');
   return { success: true };

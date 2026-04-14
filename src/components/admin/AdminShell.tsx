@@ -5,7 +5,7 @@ import AdminSidebar from './AdminSidebar';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({ children, userRole }: { children: React.ReactNode; userRole: 'admin' | 'commercial' }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -31,7 +31,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+          <AdminSidebar onNavigate={() => setMobileOpen(false)} userRole={userRole} />
         </div>
       </aside>
 

@@ -1,10 +1,12 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { createClient } from '@supabase/supabase-js';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Pizza, MapPin, ArrowRightLeft, ClipboardList, TrendingUp, Users } from 'lucide-react';
 import { DEAL_STATUSES } from './schemas/deal';
 import { getCommercials } from './actions/crm';
+import { requireAuth } from '@/lib/auth/require-role';
 
 function createCrmClient() {
   return createClient(
@@ -27,6 +29,11 @@ interface DealRow {
 }
 
 export default async function AdminDashboardPage() {
+  const session = await requireAuth();
+  if (session.role === 'commercial') {
+    redirect('/admin/crm');
+  }
+
   const supabase = createAdminSupabaseClient();
   const crmClient = createCrmClient();
 

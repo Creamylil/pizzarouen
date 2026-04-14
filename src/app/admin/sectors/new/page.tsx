@@ -1,7 +1,10 @@
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth/require-role';
 import SectorForm from '../SectorForm';
 
 export default async function NewSectorPage() {
+  await requireAdmin();
+
   const supabase = createAdminSupabaseClient();
   const { data: cities } = await supabase.from('cities').select('id, name').order('name');
 

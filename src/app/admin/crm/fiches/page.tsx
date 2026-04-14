@@ -8,6 +8,7 @@ import { DEAL_STATUSES } from '../../schemas/deal';
 import { getCommercials } from '../../actions/crm';
 import { ExternalLink, Phone } from 'lucide-react';
 import FichesFilters from './FichesFilters';
+import { requireAuth } from '@/lib/auth/require-role';
 
 function createCrmClient() {
   return createClient(
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export default async function FichesCommercialesPage({ searchParams }: Props) {
+  const session = await requireAuth();
   const filters = await searchParams;
   const supabase = createAdminSupabaseClient();
   const crmClient = createCrmClient();
@@ -87,6 +89,12 @@ export default async function FichesCommercialesPage({ searchParams }: Props) {
       contact_phone: deal?.contact_phone ?? null,
     };
   });
+
+  // Role-based visibility: restricted commercials only see their assigned deals
+  const isRestrictedCommercial = session.role === 'commercial' && !session.commercial?.can_see_all_deals;
+  if (isRestrictedCommercial) {
+    rows = rows.filter((r) => r.assigned_to === session.commercial!.id);
+  }
 
   // Apply filters
   if (filters.q) {
@@ -143,6 +151,7 @@ export default async function FichesCommercialesPage({ searchParams }: Props) {
         <FichesFilters
           cities={(cities ?? []).map((c) => ({ id: c.id, name: c.name }))}
           commercials={commercials}
+          isCommercial={isRestrictedCommercial}
         />
       </div>
 

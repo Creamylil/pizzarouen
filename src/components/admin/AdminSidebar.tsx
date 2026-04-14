@@ -14,6 +14,7 @@ import {
   Users,
   ExternalLink,
   LogOut,
+  Calculator,
 } from 'lucide-react';
 import { logoutAction } from '@/app/admin/actions/auth';
 
@@ -31,8 +32,11 @@ const commercialNav = [
   { title: 'Commerciaux', href: '/admin/commercials', icon: Users },
 ];
 
+const simulateurNav = { title: 'Simulateur', href: '/admin/simulateur', icon: Calculator };
+
 interface AdminSidebarProps {
   onNavigate?: () => void;
+  userRole: 'admin' | 'commercial';
 }
 
 function isActive(pathname: string, href: string): boolean {
@@ -44,7 +48,7 @@ function isActive(pathname: string, href: string): boolean {
   return pathname.startsWith(href);
 }
 
-export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
+export default function AdminSidebar({ onNavigate, userRole }: AdminSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -52,7 +56,7 @@ export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
       {/* Header */}
       <div className="p-4 border-b">
         <Link
-          href="/admin"
+          href={userRole === 'commercial' ? '/admin/crm' : '/admin'}
           onClick={onNavigate}
           className="flex items-center gap-2 font-bold text-lg"
         >
@@ -63,34 +67,38 @@ export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-auto py-4">
-        <div className="px-3 mb-2">
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-            Données
-          </span>
-        </div>
-        <ul className="space-y-1 px-2">
-          {dataNav.map((item) => {
-            const active = isActive(pathname, item.href);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={onNavigate}
-                  className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? 'bg-gray-200 font-medium text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span>{item.title}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        {userRole === 'admin' && (
+          <>
+            <div className="px-3 mb-2">
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Données
+              </span>
+            </div>
+            <ul className="space-y-1 px-2">
+              {dataNav.map((item) => {
+                const active = isActive(pathname, item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                        active
+                          ? 'bg-gray-200 font-medium text-gray-900'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
 
-        <div className="my-3 mx-3 border-t" />
+            <div className="my-3 mx-3 border-t" />
+          </>
+        )}
 
         <div className="px-3 mb-2">
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -98,7 +106,10 @@ export default function AdminSidebar({ onNavigate }: AdminSidebarProps) {
           </span>
         </div>
         <ul className="space-y-1 px-2">
-          {commercialNav.map((item) => {
+          {(userRole === 'admin'
+            ? [...commercialNav, simulateurNav]
+            : [commercialNav[0], commercialNav[1], simulateurNav]
+          ).map((item) => {
             const active = isActive(pathname, item.href);
             return (
               <li key={item.href}>

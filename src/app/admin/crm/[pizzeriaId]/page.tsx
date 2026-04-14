@@ -1,6 +1,7 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAuth } from '@/lib/auth/require-role';
 import DealCard from './DealCard';
 import NotesSection from './NotesSection';
 import Timeline from './Timeline';
@@ -44,7 +45,16 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
   const pizzeria = pizzeriaResult.data;
   if (!pizzeria) notFound();
 
+  const session = await requireAuth();
   const deal = dealResult.data as Record<string, unknown> | null;
+
+  // Access control: restricted commercials can only view their own deals
+  if (session.role === 'commercial' && !session.commercial?.can_see_all_deals) {
+    const dealAssignedTo = deal?.assigned_to as string | null;
+    if (!deal || dealAssignedTo !== session.commercial!.id) {
+      redirect('/admin/crm');
+    }
+  }
 
   // Auto-send welcome email si contact_email renseigné
   if (deal) {

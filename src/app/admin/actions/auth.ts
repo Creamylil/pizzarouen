@@ -41,12 +41,16 @@ export async function loginAction(email: string, password: string): Promise<{ er
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', ['admin', 'commercial'])
       .maybeSingle();
 
     if (!role) {
       await supabase.auth.signOut();
-      return { error: 'Accès refusé. Vous n\'avez pas les droits administrateur.' };
+      return { error: 'Accès refusé. Vous n\'avez pas les droits d\'accès.' };
+    }
+
+    if (role.role === 'commercial') {
+      redirect('/admin/crm');
     }
   }
 

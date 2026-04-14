@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth/require-role';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,8 @@ import { Plus, Pencil } from 'lucide-react';
 import DeleteRedirectButton from './DeleteRedirectButton';
 
 export default async function RedirectsPage() {
+  await requireAdmin();
+
   const supabase = createAdminSupabaseClient();
   const { data: redirects } = await supabase
     .from('city_redirects')

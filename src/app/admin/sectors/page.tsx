@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/auth/require-role';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,6 +8,8 @@ import { Plus, Pencil, ExternalLink } from 'lucide-react';
 import DeleteSectorButton from './DeleteSectorButton';
 
 export default async function SectorsPage() {
+  await requireAdmin();
+
   const supabase = createAdminSupabaseClient();
   const { data: sectors } = await supabase
     .from('geographic_sectors')
