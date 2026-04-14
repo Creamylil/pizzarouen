@@ -18,9 +18,9 @@ const TYPE_LABELS: Record<string, string> = {
   visite: 'Visite',
   relance: 'Relance',
   paiement: 'Paiement',
-  changement_statut: 'Changement statut',
+  changement_statut: 'Statut',
   note: 'Note',
-  lien_paiement: 'Lien de paiement',
+  lien_paiement: 'Lien paiement',
 };
 
 const EMAIL_STATUS_CONFIG: Record<string, { color: string; label: string }> = {
@@ -37,7 +37,7 @@ function EmailStatusInline({ event }: { event: Record<string, unknown> }) {
   const cfg = EMAIL_STATUS_CONFIG[status];
   if (!cfg) return null;
   return (
-    <span className={`ml-2 text-xs font-medium ${cfg.color}`}>
+    <span className={`ml-1.5 text-[11px] font-medium ${cfg.color}`}>
       • {cfg.label}
     </span>
   );
@@ -50,37 +50,39 @@ interface TimelineProps {
 export default function Timeline({ events }: TimelineProps) {
   if (events.length === 0) {
     return (
-      <p className="text-gray-400 text-sm py-4">Aucun événement enregistré.</p>
+      <p className="text-gray-400 text-xs py-2">Aucun événement.</p>
     );
   }
 
   return (
     <div className="relative">
-      <div className="absolute left-4 top-0 bottom-0 w-px bg-gray-200" />
-      <div className="space-y-4">
+      <div className="absolute left-[9px] top-0 bottom-0 w-px bg-gray-200" />
+      <div className="space-y-1.5">
         {events.map((event) => {
           const type = event.event_type as string;
           const Icon = ICON_MAP[type] ?? FileText;
           const date = new Date(event.created_at as string);
 
           return (
-            <div key={event.id as string} className="relative flex gap-4 pl-10">
-              <div className="absolute left-2 top-1 w-5 h-5 rounded-full bg-white border-2 border-gray-300 flex items-center justify-center">
-                <Icon className="h-3 w-3 text-gray-500" />
+            <div key={event.id as string} className="relative flex gap-2.5 pl-6">
+              <div className="absolute left-0 top-0.5 w-[18px] h-[18px] rounded-full bg-white border border-gray-300 flex items-center justify-center">
+                <Icon className="h-2.5 w-2.5 text-gray-500" />
               </div>
-              <div className="flex-1 bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-medium text-gray-700">
+              <div className="flex-1 min-w-0 py-0.5">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-[11px] font-medium text-gray-600">
                     {TYPE_LABELS[type] ?? type}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    {date.toLocaleDateString('fr-FR')} à {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  <span className="text-[10px] text-gray-400 tabular-nums">
+                    {date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  {event.description as string}
                   <EmailStatusInline event={event} />
-                </p>
+                </div>
+                {(event.description as string) && (
+                  <p className="text-xs text-gray-500 truncate">
+                    {event.description as string}
+                  </p>
+                )}
               </div>
             </div>
           );

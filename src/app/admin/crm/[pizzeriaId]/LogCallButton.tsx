@@ -54,38 +54,38 @@ export default function LogCallButton({ dealId, pizzeriaId }: LogCallButtonProps
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1">
       <Button
         variant="outline"
         size="sm"
         onClick={handleQuickCall}
         disabled={loading}
+        className="h-7 text-xs gap-1 px-2"
       >
-        <Phone className="h-4 w-4 mr-1" />
-        {loading ? '...' : 'Appel passé'}
+        <Phone className="h-3 w-3" />
+        {loading ? '...' : 'Appel'}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button variant="ghost" size="sm" className="text-xs text-gray-500">
-            + note
-          </Button>
+          <button className="text-[10px] text-gray-400 hover:text-gray-600">+note</button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Enregistrer un appel</DialogTitle>
+            <DialogTitle className="text-base">Enregistrer un appel</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCallWithNote} className="space-y-4">
+          <form onSubmit={handleCallWithNote} className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-1 block">Note (optionnel)</label>
+              <label className="text-xs font-medium mb-1 block text-gray-500">Note (optionnel)</label>
               <Input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Résumé de l'appel..."
+                className="h-9"
               />
             </div>
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Enregistrement...' : 'Enregistrer l\'appel'}
+            <Button type="submit" disabled={loading} size="sm" className="w-full">
+              {loading ? '...' : 'Enregistrer'}
             </Button>
           </form>
         </DialogContent>

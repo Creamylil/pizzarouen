@@ -24,7 +24,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Save } from 'lucide-react';
 
 interface DealCardProps {
   pizzeriaId: string;
@@ -112,225 +112,223 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex flex-col gap-3">
-              <span>Informations commerciales</span>
-              {isEdit && (
-                <div className="flex flex-wrap gap-1">
-                  {DEAL_STATUSES.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => handleStatusChange(s.value)}
-                      className={`px-2 py-1 rounded text-xs font-medium transition-all ${
-                        s.color
-                      } ${
-                        (deal?.status as string) === s.value
-                          ? 'ring-2 ring-offset-1 ring-gray-400'
-                          : 'opacity-50 hover:opacity-100'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {!isEdit && (
-              <FormField control={form.control} name="status" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {DEAL_STATUSES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            )}
-            <FormField control={form.control} name="assigned_to" render={({ field }) => (
+      <form onSubmit={form.handleSubmit(onSubmit)} className="bg-white border rounded-lg p-4">
+        {/* Statut pills */}
+        {isEdit && (
+          <div className="flex flex-wrap gap-1 mb-4">
+            {DEAL_STATUSES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => handleStatusChange(s.value)}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                  s.color
+                } ${
+                  (deal?.status as string) === s.value
+                    ? 'ring-2 ring-offset-1 ring-gray-400 scale-105'
+                    : 'opacity-40 hover:opacity-80'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Grille 3 colonnes dense */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Ligne 1 : Commercial / Formule / Montant */}
+          {!isEdit && (
+            <FormField control={form.control} name="status" render={({ field }) => (
               <FormItem>
-                <FormLabel>Commercial</FormLabel>
+                <FormLabel className="text-xs">Statut</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Non assigné" />
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="none">Non assigné</SelectItem>
-                    {commercials.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    {DEAL_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )} />
-            <FormField control={form.control} name="pricing_plan_slug" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Formule</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Aucune" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">Aucune</SelectItem>
-                    <SelectItem value="referencement">Référencement</SelectItem>
-                    <SelectItem value="priorite">Priorité</SelectItem>
-                    <SelectItem value="coup-de-coeur">Coup de coeur</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
+          )}
 
-            {/* Montant + paiement annuel */}
-            <div className="space-y-3">
-              <FormField control={form.control} name="monthly_amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    {watchIsAnnual ? 'Montant annuel (\u20ac)' : 'Montant mensuel (\u20ac)'}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                    />
-                  </FormControl>
-                  {watchIsAnnual && watchAmount != null && watchAmount > 0 && (
-                    <p className="text-xs text-green-600 mt-1">
-                      = {(watchAmount / 12).toFixed(2)}&euro;/mois
-                    </p>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="is_annual" render={({ field }) => (
-                <FormItem className="flex items-center gap-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="!mt-0 text-sm font-normal cursor-pointer">
-                    Paiement annuel
-                  </FormLabel>
-                </FormItem>
-              )} />
-            </div>
+          <FormField control={form.control} name="assigned_to" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Commercial</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Non assigné</SelectItem>
+                  {commercials.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-            {/* Dates abonnement + durée rapide */}
-            <div className="space-y-3">
-              <FormField control={form.control} name="subscription_start" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Début abonnement</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl><Input type="date" {...field} /></FormControl>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 text-xs"
-                      onClick={() => handleDuration(6)}
-                    >
-                      6 mois
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 text-xs"
-                      onClick={() => handleDuration(12)}
-                    >
-                      1 an
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="subscription_end" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Fin abonnement</FormLabel>
-                  <FormControl><Input type="date" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
+          <FormField control={form.control} name="pricing_plan_slug" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Formule</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Aucune</SelectItem>
+                  <SelectItem value="referencement">Référencement</SelectItem>
+                  <SelectItem value="priorite">Priorité</SelectItem>
+                  <SelectItem value="coup-de-coeur">Coup de coeur</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-            <FormField control={form.control} name="payment_method" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Mode de paiement</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Non défini" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="none">Non défini</SelectItem>
-                    <SelectItem value="virement">Virement</SelectItem>
-                    <SelectItem value="cb">Carte bancaire</SelectItem>
-                    <SelectItem value="especes">Espèces</SelectItem>
-                    <SelectItem value="cheque">Chèque</SelectItem>
-                    <SelectItem value="stripe">Stripe</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
+          {/* Montant + checkbox annuel */}
+          <FormField control={form.control} name="monthly_amount" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">
+                {watchIsAnnual ? 'Montant annuel (€)' : 'Montant mensuel (€)'}
+              </FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  step="0.01"
+                  className="h-9"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                />
+              </FormControl>
+              {watchIsAnnual && watchAmount != null && watchAmount > 0 && (
+                <p className="text-[11px] text-green-600">= {(watchAmount / 12).toFixed(2)}€/mois</p>
+              )}
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
 
-            <div className="md:col-span-2 border-t pt-4 mt-2">
-              <p className="text-sm font-medium mb-3 text-gray-700">Contact du gérant</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField control={form.control} name="contact_name" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nom</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="contact_phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
-                    <FormControl><Input {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="contact_email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl><Input type="email" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+        {/* Ligne 2 : Dates + Mode paiement */}
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          <FormField control={form.control} name="subscription_start" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Début</FormLabel>
+              <div className="flex items-center gap-1">
+                <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+                <button
+                  type="button"
+                  onClick={() => handleDuration(6)}
+                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
+                >
+                  6m
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDuration(12)}
+                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
+                >
+                  1a
+                </button>
               </div>
-            </div>
+              <FormMessage />
+            </FormItem>
+          )} />
 
-            <div className="md:col-span-2">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Enregistrement...' : isEdit ? 'Mettre à jour' : 'Créer le deal'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <FormField control={form.control} name="subscription_end" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Fin</FormLabel>
+              <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="payment_method" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Paiement</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Non défini</SelectItem>
+                  <SelectItem value="virement">Virement</SelectItem>
+                  <SelectItem value="cb">Carte bancaire</SelectItem>
+                  <SelectItem value="especes">Espèces</SelectItem>
+                  <SelectItem value="cheque">Chèque</SelectItem>
+                  <SelectItem value="stripe">Stripe</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        {/* Checkbox annuel + Contact gérant + bouton save — même ligne */}
+        <div className="flex items-end gap-3 mt-3">
+          <FormField control={form.control} name="is_annual" render={({ field }) => (
+            <FormItem className="flex items-center gap-1.5 shrink-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <FormLabel className="!mt-0 text-xs font-normal cursor-pointer whitespace-nowrap">
+                Annuel
+              </FormLabel>
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="contact_name" render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="text-xs">Nom contact</FormLabel>
+              <FormControl><Input className="h-9" placeholder="Nom gérant" {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="contact_phone" render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="text-xs">Tél contact</FormLabel>
+              <FormControl><Input className="h-9" placeholder="06..." {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <FormField control={form.control} name="contact_email" render={({ field }) => (
+            <FormItem className="flex-1">
+              <FormLabel className="text-xs">Email contact</FormLabel>
+              <FormControl><Input type="email" className="h-9" placeholder="email@..." {...field} /></FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+
+          <Button
+            type="submit"
+            size="sm"
+            disabled={form.formState.isSubmitting}
+            className="shrink-0 h-9 px-4"
+          >
+            <Save className="h-3.5 w-3.5 mr-1.5" />
+            {form.formState.isSubmitting ? '...' : isEdit ? 'Sauver' : 'Créer'}
+          </Button>
+        </div>
       </form>
     </Form>
   );

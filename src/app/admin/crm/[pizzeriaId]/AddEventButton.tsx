@@ -60,20 +60,20 @@ export default function AddEventButton({ dealId, pizzeriaId }: AddEventButtonPro
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Ajouter
+        <Button variant="outline" size="sm" className="h-7 text-xs gap-1 px-2">
+          <Plus className="h-3 w-3" />
+          Événement
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Nouvel événement</DialogTitle>
+          <DialogTitle className="text-base">Nouvel événement</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-sm font-medium mb-1 block">Type</label>
+            <label className="text-xs font-medium mb-1 block text-gray-500">Type</label>
             <Select value={eventType} onValueChange={setEventType}>
-              <SelectTrigger>
+              <SelectTrigger className="h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -84,15 +84,16 @@ export default function AddEventButton({ dealId, pizzeriaId }: AddEventButtonPro
             </Select>
           </div>
           <div>
-            <label className="text-sm font-medium mb-1 block">Description</label>
+            <label className="text-xs font-medium mb-1 block text-gray-500">Description</label>
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Résumé de l'échange..."
+              className="h-9"
             />
           </div>
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Ajout...' : 'Ajouter'}
+          <Button type="submit" disabled={loading} size="sm" className="w-full">
+            {loading ? '...' : 'Ajouter'}
           </Button>
         </form>
       </DialogContent>
