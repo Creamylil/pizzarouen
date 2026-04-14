@@ -310,6 +310,51 @@ function haversineDistance(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/**
+ * Résout un code postal en nom de commune via l'API geo.api.gouv.fr
+ */
+async function resolvePostalCodeToCommune(postalCode: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://geo.api.gouv.fr/communes?codePostal=${postalCode}&fields=nom&format=json`);
+    if (!res.ok) return null;
+    const communes = await res.json() as { nom: string }[];
+    // Retourner la première commune (la principale pour ce code postal)
+    return communes.length > 0 ? communes[0].nom : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Résout tous les codes postaux en noms de communes (batch)
+ */
+async function resolvePostalCodes(postalCodes: string[], mainPostalCodes: string[], cityName: string): Promise<Map<string, string>> {
+  const mapping = new Map<string, string>();
+
+  log.step('Résolution des noms de communes via API gouv.fr...');
+
+  for (const pc of postalCodes) {
+    // Les codes postaux principaux de la ville → nom de la ville directement
+    if (mainPostalCodes.includes(pc)) {
+      mapping.set(pc, cityName);
+      log.detail(`${pc} → ${cityName} (ville principale)`);
+      continue;
+    }
+
+    const communeName = await resolvePostalCodeToCommune(pc);
+    if (communeName) {
+      mapping.set(pc, communeName);
+      log.detail(`${pc} → ${communeName}`);
+    } else {
+      // Fallback : utiliser le code postal comme nom
+      mapping.set(pc, pc);
+      log.warn(`${pc} → pas de commune trouvée, utilisation du code postal`);
+    }
+  }
+
+  return mapping;
+}
+
 async function createSectors(
   config: CitySetupConfig,
   cityId: string,
@@ -343,6 +388,10 @@ async function createSectors(
     (existingSectors || []).map((s) => s.postal_code),
   );
 
+  // Résoudre les noms de communes pour les nouveaux codes postaux
+  const newPostalCodes = [...byPostalCode.keys()].filter(pc => !existingPostalCodes.has(pc));
+  const communeNames = await resolvePostalCodes(newPostalCodes, config.mainPostalCodes, config.name);
+
   const sectorInserts: any[] = [];
   let displayOrder = 1;
 
@@ -367,26 +416,30 @@ async function createSectors(
     );
     const radius = Math.max(maxDist * 1.2, 2);
 
-    // Nom : essayer de dériver de la ville
-    const sectorName = postalCode === config.mainPostalCodes[0]
-      ? config.name
-      : `${postalCode}`;
+    // Nom de commune résolu via API gouv.fr
+    const sectorName = communeNames.get(postalCode) || postalCode;
+    const isMainCity = config.mainPostalCodes.includes(postalCode);
 
-    const slug = slugify(sectorName === config.name ? config.name : `${config.name}-${postalCode}`);
+    // Slug : nom de commune slugifié (ex: "herouville-saint-clair")
+    const slug = slugify(sectorName);
+
+    // is_published : false pour les secteurs de la ville principale (= homepage)
+    const isPublished = !isMainCity;
 
     sectorInserts.push({
       city_id: cityId,
       name: sectorName,
       slug,
-      display_name: `${sectorName} (${pizzerias.length})`,
+      display_name: sectorName,
       postal_code: postalCode,
       center_lat: parseFloat(centerLat.toFixed(6)),
       center_lng: parseFloat(centerLng.toFixed(6)),
       radius: parseFloat(radius.toFixed(2)),
       display_order: displayOrder++,
+      is_published: isPublished,
     });
 
-    log.detail(`${postalCode} ${sectorName} → ${pizzerias.length} pizzerias, rayon ${radius.toFixed(1)}km`);
+    log.detail(`${postalCode} ${sectorName} → ${pizzerias.length} pizzerias, rayon ${radius.toFixed(1)}km${!isPublished ? ' (homepage, non publié)' : ''}`);
   }
 
   if (sectorInserts.length > 0 && !dryRun) {
@@ -396,16 +449,15 @@ async function createSectors(
       return 0;
     }
 
-    // Mettre à jour default_sector_slug si c'est le premier secteur
-    if (sectorInserts.length > 0) {
-      // Le premier secteur (le plus de pizzerias) devient le défaut
-      await supabase
-        .from('cities')
-        .update({ default_sector_slug: sectorInserts[0].slug })
-        .eq('id', cityId);
-    }
+    // Mettre à jour default_sector_slug avec le secteur principal
+    const mainSector = sectorInserts.find(s => config.mainPostalCodes.includes(s.postal_code));
+    const defaultSlug = mainSector ? mainSector.slug : sectorInserts[0].slug;
+    await supabase
+      .from('cities')
+      .update({ default_sector_slug: defaultSlug })
+      .eq('id', cityId);
 
-    log.success(`${sectorInserts.length} secteurs créés`);
+    log.success(`${sectorInserts.length} secteurs créés (default: ${defaultSlug})`);
   } else if (dryRun) {
     log.info(`[DRY RUN] ${sectorInserts.length} secteurs seraient créés`);
   }
