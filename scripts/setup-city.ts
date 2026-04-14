@@ -7,9 +7,10 @@
  *
  * Ce script :
  *   1. Crée la ligne dans la table `cities`
- *   2. Scrape les pizzerias via Google Maps Places API
- *   3. Télécharge les photos → Supabase Storage
- *   4. Crée les secteurs géographiques automatiquement
+ *   2. Découvre les communes proches via API geo.api.gouv.fr
+ *   3. Scrape les pizzerias (ville + communes) via Google Maps Places API
+ *   4. Télécharge les photos → Supabase Storage
+ *   5. Crée les secteurs géographiques automatiquement
  */
 
 import * as fs from 'fs';
@@ -138,13 +139,48 @@ function extractPostalCode(address: string): string | null {
   return match ? match[1] : null;
 }
 
+/**
+ * Déduplique les résultats Google Places (multi-recherche ville + communes)
+ * Clé primaire : Google Place ID (champ `id`)
+ * Fallback : name.toLowerCase() + code postal
+ */
+function deduplicatePlaces(places: GooglePlaceResult[]): GooglePlaceResult[] {
+  const seenById = new Map<string, GooglePlaceResult>();
+  const seenByName = new Set<string>();
+
+  for (const place of places) {
+    // Dédup par Google Place ID (fiable, unique)
+    if (place.id) {
+      if (seenById.has(place.id)) continue;
+      seenById.set(place.id, place);
+
+      // Tracker aussi le nom pour le fallback
+      const name = (place.displayName?.text || '').toLowerCase().trim();
+      const postal = extractPostalCode(place.formattedAddress || '') || '';
+      seenByName.add(`${name}|${postal}`);
+      continue;
+    }
+
+    // Fallback sans ID : nom + code postal
+    const name = (place.displayName?.text || '').toLowerCase().trim();
+    const postal = extractPostalCode(place.formattedAddress || '') || '';
+    const key = `${name}|${postal}`;
+    if (seenByName.has(key)) continue;
+    seenByName.add(key);
+    seenById.set(`fallback-${key}`, place);
+  }
+
+  return Array.from(seenById.values());
+}
+
 async function scrapePizzerias(
   config: CitySetupConfig,
   cityId: string,
+  nearbyCommunes: NearbyCommune[],
   skipImages: boolean,
   dryRun: boolean,
 ): Promise<{ stats: SetupStats; pizzeriasWithPostalCodes: { postalCode: string; lat: number; lng: number; name: string }[] }> {
-  log.step(`Recherche des pizzerias à ${config.name}...`);
+  log.step(`Recherche des pizzerias à ${config.name} et communes proches...`);
 
   const stats: SetupStats = {
     pizzeriasImported: 0,
@@ -153,15 +189,38 @@ async function scrapePizzerias(
     sectorsCreated: 0,
   };
 
-  // Recherche via Google Maps
-  const results = await searchPizzerias(
+  // ── 1. Recherche ville principale (15km) ────────────────────
+  const mainResults = await searchPizzerias(
     `pizzeria à ${config.name}`,
     config.centerLat,
     config.centerLng,
     15000,
   );
 
-  log.info(`${results.length} résultats trouvés sur Google Maps`);
+  log.info(`${mainResults.length} résultats — ville principale (${config.name})`);
+
+  // ── 2. Recherche par commune proche (5km chacune) ───────────
+  const communeResults: GooglePlaceResult[] = [];
+
+  for (const commune of nearbyCommunes) {
+    log.detail(`Recherche "pizzeria à ${commune.name}"...`);
+    const communePlaces = await searchPizzerias(
+      `pizzeria à ${commune.name}`,
+      commune.centerLat,
+      commune.centerLng,
+      5000,
+    );
+    communeResults.push(...communePlaces);
+    log.detail(`  → ${communePlaces.length} résultats`);
+
+    // Pause entre les appels API pour respecter les rate limits
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  // ── 3. Dédupliquer ──────────────────────────────────────────
+  const results = deduplicatePlaces([...mainResults, ...communeResults]);
+  const dupsRemoved = mainResults.length + communeResults.length - results.length;
+  log.info(`${results.length} résultats uniques (${mainResults.length} ville + ${communeResults.length} communes, ${dupsRemoved} doublons retirés)`);
 
   if (results.length === 0) {
     log.warn('Aucune pizzeria trouvée. Vérifiez les coordonnées et le nom de la ville.');
@@ -433,9 +492,10 @@ async function createSectors(
   config: CitySetupConfig,
   cityId: string,
   pizzeriasData: { postalCode: string; lat: number; lng: number; name: string }[],
+  nearbyCommunes: NearbyCommune[],
   dryRun: boolean,
 ): Promise<number> {
-  log.step('Création des secteurs géographiques (découverte proactive)...');
+  log.step('Création des secteurs géographiques...');
 
   const supabase = createAdminClient();
 
@@ -452,11 +512,6 @@ async function createSectors(
     (existingSectors || []).map(s => s.slug),
   );
 
-  // ── 1. Découvrir les communes proches via API gouv ────────────
-  const departmentCode = getDepartmentCode(config.mainPostalCodes);
-  const cityCenter = { lat: config.centerLat, lng: config.centerLng };
-  const nearbyCommunes = await fetchNearbyCommunes(departmentCode, cityCenter, config.mainPostalCodes);
-
   // Compter les pizzerias par code postal
   const pizzeriaCountByPC = new Map<string, number>();
   for (const p of pizzeriasData) {
@@ -466,7 +521,7 @@ async function createSectors(
   const sectorInserts: any[] = [];
   let displayOrder = 1;
 
-  // ── 2. Secteurs ville principale (is_published = false) ───────
+  // ── 1. Secteurs ville principale (is_published = false) ───────
   log.divider();
   log.info('Secteurs ville principale (non publiés) :');
 
@@ -498,7 +553,7 @@ async function createSectors(
     log.detail(`  ${postalCode} ${config.name} → ${count} pizzerias (homepage)`);
   }
 
-  // ── 3. Secteurs communes proches (is_published = true) ────────
+  // ── 2. Secteurs communes proches (is_published = true) ────────
   log.divider();
   log.info('Secteurs communes proches (publiés) :');
 
@@ -541,7 +596,7 @@ async function createSectors(
     log.detail(`  ${primaryPC} ${commune.name} → ${count} pizzerias, ${commune.population.toLocaleString()} hab, ${commune.distanceKm.toFixed(1)}km`);
   }
 
-  // ── 4. Fallback : codes postaux de pizzerias non couverts ─────
+  // ── 3. Fallback : codes postaux de pizzerias non couverts ─────
   const uncoveredPCs = [...pizzeriaCountByPC.keys()].filter(
     pc => !coveredPostalCodes.has(pc) && !existingPostalCodes.has(pc),
   );
@@ -585,7 +640,7 @@ async function createSectors(
     }
   }
 
-  // ── 5. Insérer en base ────────────────────────────────────────
+  // ── 4. Insérer en base ────────────────────────────────────────
   if (sectorInserts.length > 0 && !dryRun) {
     const { error } = await supabase.from('geographic_sectors').insert(sectorInserts);
     if (error) {
@@ -685,16 +740,23 @@ async function main() {
     log.warn('OPENAI_API_KEY non définie — génération du logo ignorée');
   }
 
-  // Étape 2 : Scraper et insérer les pizzerias
+  // Étape 2 : Découvrir les communes proches
+  log.divider();
+  const departmentCode = getDepartmentCode(config.mainPostalCodes);
+  const cityCenter = { lat: config.centerLat, lng: config.centerLng };
+  const nearbyCommunes = await fetchNearbyCommunes(departmentCode, cityCenter, config.mainPostalCodes);
+
+  // Étape 3 : Scraper les pizzerias (ville principale + communes proches)
   const { stats, pizzeriasWithPostalCodes } = await scrapePizzerias(
     config,
     cityId,
+    nearbyCommunes,
     skipImages,
     dryRun,
   );
 
-  // Étape 3 : Créer les secteurs
-  stats.sectorsCreated = await createSectors(config, cityId, pizzeriasWithPostalCodes, dryRun);
+  // Étape 4 : Créer les secteurs (communes déjà découvertes)
+  stats.sectorsCreated = await createSectors(config, cityId, pizzeriasWithPostalCodes, nearbyCommunes, dryRun);
 
   // ─── Résumé final ──────────────────────────────────────────
   log.divider();
