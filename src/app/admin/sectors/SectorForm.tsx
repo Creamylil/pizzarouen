@@ -8,6 +8,8 @@ import { sectorFormSchema, type SectorFormData } from '../schemas/sector';
 import { createSector, updateSector } from '../actions/sectors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -22,6 +24,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -37,6 +40,13 @@ interface SectorFormProps {
     radius: number;
     postal_code: string | null;
     display_order: number;
+    meta_title: string | null;
+    meta_description: string | null;
+    og_title: string | null;
+    og_description: string | null;
+    og_image_url: string | null;
+    seo_content: unknown;
+    is_published: boolean;
   };
   cities: { id: string; name: string }[];
 }
@@ -57,6 +67,13 @@ export default function SectorForm({ sector, cities }: SectorFormProps) {
       radius: sector?.radius ?? 5,
       postal_code: sector?.postal_code ?? '',
       display_order: sector?.display_order ?? 0,
+      meta_title: sector?.meta_title ?? '',
+      meta_description: sector?.meta_description ?? '',
+      og_title: sector?.og_title ?? '',
+      og_description: sector?.og_description ?? '',
+      og_image_url: sector?.og_image_url ?? '',
+      seo_content_raw: sector?.seo_content ? JSON.stringify(sector.seo_content, null, 2) : '',
+      is_published: sector?.is_published ?? true,
     },
   });
 
@@ -163,6 +180,81 @@ export default function SectorForm({ sector, cities }: SectorFormProps) {
                 <FormControl>
                   <Input type="number" step="0.1" {...field} onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>SEO</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4">
+            <FormField control={form.control} name="is_published" render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel>Publié</FormLabel>
+                  <FormDescription>La page secteur est accessible publiquement</FormDescription>
+                </div>
+                <FormControl>
+                  <Switch checked={field.value} onCheckedChange={field.onChange} />
+                </FormControl>
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="meta_title" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Meta Title</FormLabel>
+                <FormControl>
+                  <Input placeholder="Les Pizzerias ouvertes à ... | Livraison 24h/24" {...field} />
+                </FormControl>
+                <FormDescription>Laissez vide pour le template auto</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="meta_description" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Meta Description</FormLabel>
+                <FormControl>
+                  <Textarea placeholder="Découvrez les meilleures pizzerias de ..." rows={3} {...field} />
+                </FormControl>
+                <FormDescription>Laissez vide pour le template auto</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="og_title" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>OG Title</FormLabel>
+                  <FormControl><Input placeholder="Optionnel" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="og_description" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>OG Description</FormLabel>
+                  <FormControl><Input placeholder="Optionnel" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="og_image_url" render={({ field }) => (
+              <FormItem>
+                <FormLabel>OG Image URL</FormLabel>
+                <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <FormField control={form.control} name="seo_content_raw" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contenu SEO (JSON)</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder='{"sections": [...]}'
+                    rows={8}
+                    className="font-mono text-sm"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>Format SeoContentData (sections: intro, grid, highlight, info). Laissez vide si non nécessaire.</FormDescription>
                 <FormMessage />
               </FormItem>
             )} />

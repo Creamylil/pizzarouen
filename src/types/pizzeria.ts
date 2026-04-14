@@ -32,6 +32,14 @@ export interface GeographicSector {
   postal_code?: string;
   display_name?: string;
   display_order?: number;
+  // SEO fields
+  meta_title?: string;
+  meta_description?: string;
+  og_title?: string;
+  og_description?: string;
+  og_image_url?: string;
+  seo_content?: import('@/types/city').SeoContentData;
+  is_published?: boolean;
   created_at: string;
   updated_at: string;
 }

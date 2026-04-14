@@ -29,7 +29,7 @@ export default function ZoneSelector({ selectedZone, onZoneSelect, sectors, pizz
     }
     const zone = allZones.find(z => z.id === zoneId);
     if (zone) {
-      router.push(`/?sector=${zone.id}`);
+      router.push(`/${zone.id}`);
       onZoneSelect(zone);
     }
   };

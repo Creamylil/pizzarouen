@@ -1,15 +1,16 @@
 import Link from 'next/link';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, ExternalLink } from 'lucide-react';
 import DeleteSectorButton from './DeleteSectorButton';
 
 export default async function SectorsPage() {
   const supabase = createAdminSupabaseClient();
   const { data: sectors } = await supabase
     .from('geographic_sectors')
-    .select('id, name, slug, display_name, display_order, postal_code, cities(name)')
+    .select('id, name, slug, display_name, display_order, postal_code, is_published, cities(name)')
     .order('display_order');
 
   return (
@@ -33,7 +34,8 @@ export default async function SectorsPage() {
               <TableHead>Slug</TableHead>
               <TableHead>Ville</TableHead>
               <TableHead>Code postal</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
+              <TableHead>Publié</TableHead>
+              <TableHead className="w-28">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -47,7 +49,21 @@ export default async function SectorsPage() {
                 </TableCell>
                 <TableCell>{s.postal_code || '—'}</TableCell>
                 <TableCell>
+                  {(s.is_published !== false) ? (
+                    <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Oui</Badge>
+                  ) : (
+                    <Badge variant="secondary">Non</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
                   <div className="flex items-center gap-1">
+                    {(s.is_published !== false) && (
+                      <Button variant="ghost" size="icon" asChild>
+                        <a href={`/${s.slug}`} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" asChild>
                       <Link href={`/admin/sectors/${s.id}`}>
                         <Pencil className="h-4 w-4" />

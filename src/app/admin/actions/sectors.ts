@@ -7,6 +7,15 @@ import type { SectorFormData } from '../schemas/sector';
 type ActionResult = { success: true } | { success: false; error: string };
 
 function formToRow(data: SectorFormData) {
+  let seoContent = null;
+  if (data.seo_content_raw) {
+    try {
+      seoContent = JSON.parse(data.seo_content_raw);
+    } catch {
+      // Invalid JSON, leave as null
+    }
+  }
+
   return {
     name: data.name,
     slug: data.slug,
@@ -17,6 +26,13 @@ function formToRow(data: SectorFormData) {
     radius: data.radius,
     postal_code: data.postal_code || null,
     display_order: data.display_order,
+    meta_title: data.meta_title || null,
+    meta_description: data.meta_description || null,
+    og_title: data.og_title || null,
+    og_description: data.og_description || null,
+    og_image_url: data.og_image_url || null,
+    seo_content: seoContent,
+    is_published: data.is_published,
   };
 }
 
@@ -25,6 +41,7 @@ export async function createSector(data: SectorFormData): Promise<ActionResult> 
   const { error } = await supabase.from('geographic_sectors').insert(formToRow(data));
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/sectors');
+  revalidatePath('/');
   return { success: true };
 }
 
@@ -33,6 +50,7 @@ export async function updateSector(id: string, data: SectorFormData): Promise<Ac
   const { error } = await supabase.from('geographic_sectors').update(formToRow(data)).eq('id', id);
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/sectors');
+  revalidatePath('/');
   return { success: true };
 }
 
@@ -41,5 +59,6 @@ export async function deleteSector(id: string): Promise<ActionResult> {
   const { error } = await supabase.from('geographic_sectors').delete().eq('id', id);
   if (error) return { success: false, error: error.message };
   revalidatePath('/admin/sectors');
+  revalidatePath('/');
   return { success: true };
 }

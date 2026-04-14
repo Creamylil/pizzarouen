@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { fetchCityConfig } from '@/lib/data/city';
 import { fetchPizzerias } from '@/lib/data/pizzerias';
 import { fetchGeographicSectors } from '@/lib/data/sectors';
@@ -23,6 +24,16 @@ export default async function HomePage({
     fetchPizzerias(),
     fetchGeographicSectors(),
   ]);
+
+  // Redirect /?sector=slug to /slug (301)
+  if (params.sector && params.sector !== 'all') {
+    const matchingSector = sectors.find(
+      s => s.slug === params.sector || s.postal_code === params.sector
+    );
+    if (matchingSector) {
+      redirect(`/${matchingSector.slug}`);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-gray-100">

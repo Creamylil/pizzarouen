@@ -12,10 +12,12 @@ interface FooterProps {
 }
 
 export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp, logoUrl, sectors }: FooterProps) {
+  const publishedSectors = sectors.filter(s => s.is_published !== false);
+
   return (
     <footer className="bg-gray-900 text-white py-12">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
               {logoUrl ? (
@@ -30,6 +32,24 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
               commandez vos pizzas préférées en quelques clics.
             </p>
           </div>
+
+          {publishedSectors.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-4">Secteurs</h3>
+              <ul className="space-y-2 text-sm">
+                {publishedSectors.map(sector => (
+                  <li key={sector.id}>
+                    <Link
+                      href={`/${sector.slug}`}
+                      className="text-gray-300 hover:text-white transition-colors"
+                    >
+                      {sector.display_name || sector.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div>
             <h3 className="font-semibold mb-4">Navigation</h3>

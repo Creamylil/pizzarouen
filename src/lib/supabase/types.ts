@@ -148,9 +148,16 @@ export type Database = {
           display_name: string | null
           display_order: number
           id: string
+          is_published: boolean
+          meta_title: string | null
+          meta_description: string | null
           name: string
+          og_title: string | null
+          og_description: string | null
+          og_image_url: string | null
           postal_code: string | null
           radius: number
+          seo_content: unknown
           slug: string
           updated_at: string
         }
@@ -162,9 +169,16 @@ export type Database = {
           display_name?: string | null
           display_order?: number
           id?: string
+          is_published?: boolean
+          meta_title?: string | null
+          meta_description?: string | null
           name: string
+          og_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
           postal_code?: string | null
           radius?: number
+          seo_content?: unknown
           slug: string
           updated_at?: string
         }
@@ -176,9 +190,16 @@ export type Database = {
           display_name?: string | null
           display_order?: number
           id?: string
+          is_published?: boolean
+          meta_title?: string | null
+          meta_description?: string | null
           name?: string
+          og_title?: string | null
+          og_description?: string | null
+          og_image_url?: string | null
           postal_code?: string | null
           radius?: number
+          seo_content?: unknown
           slug?: string
           updated_at?: string
         }
