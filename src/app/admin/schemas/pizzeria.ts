@@ -36,9 +36,28 @@ export const pizzeriaFormSchema = z.object({
 
 export type PizzeriaFormData = z.infer<typeof pizzeriaFormSchema>;
 
+function generateSlug(name: string): string {
+  const accents: Record<string, string> = {
+    'à': 'a', 'â': 'a', 'ä': 'a', 'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+    'ï': 'i', 'î': 'i', 'ô': 'o', 'ù': 'u', 'û': 'u', 'ü': 'u', 'ç': 'c',
+    'À': 'A', 'Â': 'A', 'Ä': 'A', 'É': 'E', 'È': 'E', 'Ê': 'E', 'Ë': 'E',
+    'Ï': 'I', 'Î': 'I', 'Ô': 'O', 'Ù': 'U', 'Û': 'U', 'Ü': 'U', 'Ç': 'C',
+  };
+  return name
+    .split('')
+    .map(c => accents[c] || c)
+    .join('')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'pizzeria';
+}
+
 export function formToRow(data: PizzeriaFormData) {
   return {
     name: data.name,
+    slug: generateSlug(data.name),
     city_id: data.city_id,
     address: data.address,
     short_address: data.short_address || null,

@@ -8,6 +8,7 @@ function transformPizzeriaData(dbPizzeria: any): Pizzeria {
   const servicesInfo = dbPizzeria.services_info || {};
   return {
     id: dbPizzeria.id,
+    slug: dbPizzeria.slug || '',
     name: dbPizzeria.name,
     image: dbPizzeria.image_url || '',
     rating: parseFloat(dbPizzeria.rating) || 0,

@@ -12,6 +12,7 @@ import type { ZoneDefinition } from '@/utils/geographicRanking';
 import { parseOpeningHours, isOpen } from '@/utils/openingHours';
 import { findZoneBySector, rankPizzeriasByGeography } from '@/utils/geographicRanking';
 import { extractPostalCode } from '@/utils/postalCodeUtils';
+import { getPizzeriaFicheUrl } from '@/utils/pizzeriaUrl';
 
 const PizzeriaMap = dynamic(() => import('@/components/map/PizzeriaMap'), {
   ssr: false,
@@ -239,7 +240,7 @@ export default function SectorPageClient({
               variant="green"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {localOpen.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {localOpen.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -262,7 +263,7 @@ export default function SectorPageClient({
               variant="gray"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
-              {localClosed.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {localClosed.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -276,7 +277,7 @@ export default function SectorPageClient({
               variant="gold"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {top10.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {top10.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -290,7 +291,7 @@ export default function SectorPageClient({
               variant="blue"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {others.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {others.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}

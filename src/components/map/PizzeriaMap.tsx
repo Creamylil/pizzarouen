@@ -8,6 +8,7 @@ interface PizzeriaMapProps {
   pizzerias: Pizzeria[];
   center?: [number, number];
   zoom?: number;
+  showAll?: boolean;
 }
 
 function isPizzeriaOpen(pizzeria: Pizzeria): boolean {
@@ -20,7 +21,7 @@ function isPizzeriaOpen(pizzeria: Pizzeria): boolean {
   }
 }
 
-export default function PizzeriaMap({ pizzerias, center = [49.4432, 1.0993], zoom = 13 }: PizzeriaMapProps) {
+export default function PizzeriaMap({ pizzerias, center = [49.4432, 1.0993], zoom = 13, showAll = false }: PizzeriaMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -40,10 +41,11 @@ export default function PizzeriaMap({ pizzerias, center = [49.4432, 1.0993], zoo
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
 
-      // N'afficher que les pizzerias ouvertes
+      // Afficher les pizzerias (ouvertes seulement, ou toutes si showAll)
       pizzerias.forEach(pizzeria => {
         if (!pizzeria.latitude || !pizzeria.longitude) return;
-        if (!isPizzeriaOpen(pizzeria)) return;
+        const pizzeriaOpen = isPizzeriaOpen(pizzeria);
+        if (!showAll && !pizzeriaOpen) return;
 
         const markerColor = pizzeria.priorityLevel === 'niveau_2' ? '#9333ea' :
           pizzeria.priorityLevel === 'niveau_1' ? '#d97706' : '#16a34a';
@@ -61,7 +63,7 @@ export default function PizzeriaMap({ pizzerias, center = [49.4432, 1.0993], zoo
             <strong>${pizzeria.name}</strong><br/>
             <span style="color: #666;">${pizzeria.address}</span><br/>
             <span>⭐ ${pizzeria.rating} (${pizzeria.reviews} avis)</span><br/>
-            <span>🟢 Ouvert</span>
+            <span>${pizzeriaOpen ? '🟢 Ouvert' : '🔴 Fermé'}</span>
           </div>
         `);
         marker.addTo(map);

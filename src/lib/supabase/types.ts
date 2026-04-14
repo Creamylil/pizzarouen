@@ -301,6 +301,7 @@ export type Database = {
           city_id: string
           created_at: string
           description: string | null
+          slug: string
           geocoded_at: string | null
           geocoding_status: string | null
           google_maps_link: string | null
@@ -346,6 +347,7 @@ export type Database = {
           reviews_link?: string | null
           services_info?: Json | null
           short_address?: string | null
+          slug: string
           subcategory?: string | null
           updated_at?: string
         }
@@ -373,6 +375,7 @@ export type Database = {
           reviews_link?: string | null
           services_info?: Json | null
           short_address?: string | null
+          slug?: string
           subcategory?: string | null
           updated_at?: string
         }

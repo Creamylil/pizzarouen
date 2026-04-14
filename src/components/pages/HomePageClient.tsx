@@ -11,6 +11,7 @@ import type { ZoneDefinition } from '@/utils/geographicRanking';
 import { parseOpeningHours, isOpen } from '@/utils/openingHours';
 import { findZoneBySector, rankPizzeriasByGeography } from '@/utils/geographicRanking';
 import { extractPostalCode } from '@/utils/postalCodeUtils';
+import { getPizzeriaFicheUrl } from '@/utils/pizzeriaUrl';
 
 const PizzeriaMap = dynamic(() => import('@/components/map/PizzeriaMap'), {
   ssr: false,
@@ -252,7 +253,7 @@ export default function HomePageClient({
               variant="gold"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -266,7 +267,7 @@ export default function HomePageClient({
               variant="green"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {localOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {localOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -280,7 +281,7 @@ export default function HomePageClient({
               variant="gold"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {top10Pizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -294,7 +295,7 @@ export default function HomePageClient({
               variant="blue"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {nearbyOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {nearbyOpenPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}
@@ -308,7 +309,7 @@ export default function HomePageClient({
               variant="gray"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 opacity-70">
-              {closedPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} />)}
+              {closedPizzerias.map(pizzeria => <PizzeriaCard key={pizzeria.id} pizzeria={pizzeria} ficheUrl={getPizzeriaFicheUrl(pizzeria, sectors, mainPostalCodes)} />)}
             </div>
           </section>
         )}

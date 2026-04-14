@@ -11,6 +11,7 @@ function transformPizzeriaData(dbPizzeria: any): Pizzeria {
 
   return {
     id: dbPizzeria.id,
+    slug: dbPizzeria.slug || '',
     name: dbPizzeria.name,
     image: dbPizzeria.image_url || '',
     rating: parseFloat(dbPizzeria.rating) || 0,
@@ -49,4 +50,18 @@ export async function fetchPizzerias(): Promise<Pizzeria[]> {
   }
 
   return data.map(transformPizzeriaData);
+}
+
+export async function fetchPizzeriaBySlug(slug: string): Promise<Pizzeria | null> {
+  const cityConfig = await fetchCityConfig();
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from('pizzerias')
+    .select('*')
+    .eq('city_id', cityConfig.id)
+    .eq('slug', slug)
+    .single();
+
+  if (error || !data) return null;
+  return transformPizzeriaData(data);
 }

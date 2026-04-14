@@ -1,11 +1,14 @@
 import { MetadataRoute } from "next";
 import { fetchCityConfig } from "@/lib/data/city";
 import { fetchGeographicSectors } from "@/lib/data/sectors";
+import { fetchPizzerias } from "@/lib/data/pizzerias";
+import { extractPostalCode } from "@/utils/postalCodeUtils";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [city, sectors] = await Promise.all([
+  const [city, sectors, pizzerias] = await Promise.all([
     fetchCityConfig(),
     fetchGeographicSectors(),
+    fetchPizzerias(),
   ]);
   const baseUrl = city.siteUrl;
   const now = new Date();
@@ -19,6 +22,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
+  // Pizzeria detail pages
+  const pizzeriaEntries: MetadataRoute.Sitemap = [];
+  for (const pizzeria of pizzerias) {
+    if (!pizzeria.slug) continue;
+    const pc = extractPostalCode(pizzeria.address);
+    if (!pc) continue;
+
+    const matchingSector = sectors.find(sector => {
+      if (!sector.postal_code) return false;
+      if (city.mainPostalCodes.includes(sector.postal_code)) {
+        return city.mainPostalCodes.includes(pc);
+      }
+      return sector.postal_code === pc;
+    });
+
+    if (matchingSector) {
+      pizzeriaEntries.push({
+        url: `${baseUrl}/${matchingSector.slug}/${pizzeria.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      });
+    }
+  }
+
   return [
     {
       url: baseUrl,
@@ -27,5 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     ...sectorEntries,
+    ...pizzeriaEntries,
   ];
 }

@@ -8,13 +8,15 @@ import ServiceBadge from './ServiceBadge';
 import PizzeriaInfo from './PizzeriaInfo';
 import PizzeriaActions from './PizzeriaActions';
 import OptimizedPizzeriaImage from './OptimizedPizzeriaImage';
+import Link from 'next/link';
 import { Star, MessageSquare } from 'lucide-react';
 
 interface PizzeriaCardProps {
   pizzeria: Pizzeria;
+  ficheUrl?: string | null;
 }
 
-export default function PizzeriaCard({ pizzeria }: PizzeriaCardProps) {
+export default function PizzeriaCard({ pizzeria, ficheUrl }: PizzeriaCardProps) {
   const [isCurrentlyOpen, setIsCurrentlyOpen] = useState(false);
   const [todayHours, setTodayHours] = useState('');
   const [hasOpeningHours, setHasOpeningHours] = useState(false);
@@ -102,6 +104,14 @@ export default function PizzeriaCard({ pizzeria }: PizzeriaCardProps) {
           priorityLevel={pizzeria.priorityLevel}
           pizzeriaName={pizzeria.name}
         />
+        {ficheUrl && (
+          <Link
+            href={ficheUrl}
+            className="block text-center text-xs text-muted-foreground hover:text-primary transition-colors mt-2 font-medium hover:underline underline-offset-2"
+          >
+            Voir la fiche →
+          </Link>
+        )}
       </div>
     </div>
   );
