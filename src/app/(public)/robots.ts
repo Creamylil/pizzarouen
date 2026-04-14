@@ -9,7 +9,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/404"],
+        disallow: ["/404", "/admin"],
       },
     ],
     sitemap: `${city.siteUrl}/sitemap.xml`,
