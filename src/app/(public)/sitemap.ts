@@ -29,11 +29,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const pc = extractPostalCode(pizzeria.address);
     if (!pc) continue;
 
+    // Pizzerias du centre → /{slug} directement
+    if (city.mainPostalCodes.includes(pc)) {
+      pizzeriaEntries.push({
+        url: `${baseUrl}/${pizzeria.slug}`,
+        lastModified: now,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      });
+      continue;
+    }
+
+    // Pizzerias des communes → /{sector}/{slug}
     const matchingSector = sectors.find(sector => {
       if (!sector.postal_code) return false;
-      if (city.mainPostalCodes.includes(sector.postal_code)) {
-        return city.mainPostalCodes.includes(pc);
-      }
+      if (sector.is_published === false) return false;
       return sector.postal_code === pc;
     });
 

@@ -20,16 +20,15 @@ export function getPizzeriaFicheUrl(
   const pizzeriaPC = extractPostalCode(pizzeria.address);
   if (!pizzeriaPC) return null;
 
-  // Chercher un secteur dont le code postal correspond
+  // Pizzerias du centre (mainPostalCodes) → URL directe /{slug}
+  if (mainPostalCodes.includes(pizzeriaPC)) {
+    return `/${pizzeria.slug}`;
+  }
+
+  // Pizzerias des communes → /{secteur}/{slug}
   const matchingSector = sectors.find(sector => {
     if (!sector.postal_code) return false;
-
-    // Pour le secteur principal (mainPostalCodes), matcher tous les CP principaux
-    if (mainPostalCodes.includes(sector.postal_code)) {
-      return mainPostalCodes.includes(pizzeriaPC);
-    }
-
-    // Pour les autres secteurs, matcher le CP exactement
+    if (sector.is_published === false) return false;
     return sector.postal_code === pizzeriaPC;
   });
 

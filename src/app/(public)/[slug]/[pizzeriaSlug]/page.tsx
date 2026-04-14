@@ -33,11 +33,12 @@ export async function generateStaticParams() {
     const pizzeriaPC = extractPostalCode(pizzeria.address);
     if (!pizzeriaPC) continue;
 
+    // Pizzerias du centre → servies par [slug]/page.tsx, pas ici
+    if (cityConfig.mainPostalCodes.includes(pizzeriaPC)) continue;
+
     const matchingSector = sectors.find(sector => {
       if (!sector.postal_code) return false;
-      if (cityConfig.mainPostalCodes.includes(sector.postal_code)) {
-        return cityConfig.mainPostalCodes.includes(pizzeriaPC);
-      }
+      if (sector.is_published === false) return false;
       return sector.postal_code === pizzeriaPC;
     });
 
@@ -95,15 +96,19 @@ export default async function PizzeriaPage({ params }: PizzeriaPageProps) {
     fetchGeographicSectors(),
   ]);
 
-  if (!sector || !pizzeria) notFound();
+  if (!sector || !pizzeria || sector.is_published === false) notFound();
 
   const sectorName = sector.display_name || sector.name;
+  const isCenterSector = cityConfig.mainPostalCodes.includes(sector.postal_code || '');
   const pizzeriaUrl = `${cityConfig.siteUrl}/${slug}/${pizzeriaSlug}`;
 
   // Breadcrumb
   const breadcrumbItems = [
     { name: 'Accueil', url: cityConfig.siteUrl },
-    { name: sectorName, url: `${cityConfig.siteUrl}/${slug}` },
+    {
+      name: isCenterSector ? `Pizzerias à ${cityConfig.name}` : sectorName,
+      url: isCenterSector ? cityConfig.siteUrl : `${cityConfig.siteUrl}/${slug}`,
+    },
     { name: pizzeria.name, url: pizzeriaUrl },
   ];
 

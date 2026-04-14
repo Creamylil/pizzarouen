@@ -60,6 +60,7 @@ export default function PizzeriaDetailClient({
   centerCoords,
 }: PizzeriaDetailClientProps) {
   const sectorName = sector.display_name || sector.name;
+  const isCenterSector = mainPostalCodes.includes(sector.postal_code || '');
   const [isCurrentlyOpen, setIsCurrentlyOpen] = useState(false);
   const [todayHours, setTodayHours] = useState('');
   const [hasOpeningHours, setHasOpeningHours] = useState(false);
@@ -107,8 +108,8 @@ export default function PizzeriaDetailClient({
           </li>
           <li><ChevronRight className="h-3.5 w-3.5" /></li>
           <li>
-            <Link href={`/${sector.slug}`} className="hover:text-gray-900 transition-colors">
-              {sectorName}
+            <Link href={isCenterSector ? '/' : `/${sector.slug}`} className="hover:text-gray-900 transition-colors">
+              {isCenterSector ? `Pizzerias à ${cityName}` : sectorName}
             </Link>
           </li>
           <li><ChevronRight className="h-3.5 w-3.5" /></li>
