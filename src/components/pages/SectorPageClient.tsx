@@ -170,17 +170,6 @@ export default function SectorPageClient({
 
   return (
     <>
-      {/* Breadcrumb */}
-      <nav className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-2" aria-label="Fil d'Ariane">
-        <ol className="flex items-center gap-1.5 text-sm text-gray-500">
-          <li>
-            <Link href="/" className="hover:text-gray-900 transition-colors">Accueil</Link>
-          </li>
-          <li><ChevronRight className="h-3.5 w-3.5" /></li>
-          <li className="text-gray-900 font-medium">{displayName}</li>
-        </ol>
-      </nav>
-
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -195,6 +184,17 @@ export default function SectorPageClient({
       />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Breadcrumb */}
+        <nav className="mb-4" aria-label="Fil d'Ariane">
+          <ol className="flex items-center gap-1.5 text-sm text-gray-500">
+            <li>
+              <Link href="/" className="hover:text-gray-900 transition-colors">Accueil</Link>
+            </li>
+            <li><ChevronRight className="h-3.5 w-3.5" /></li>
+            <li className="text-gray-900 font-medium">{displayName}</li>
+          </ol>
+        </nav>
+
         {/* Map toggle */}
         {viewMode === 'list' && mapPizzerias.length > 0 && (
           <div className="flex justify-center mb-6">
@@ -263,7 +263,7 @@ export default function SectorPageClient({
           <section className="mb-10">
             <SectionHeader
               count={top10.length}
-              title={`Meilleures Pizzerias à ${cityName}`}
+              title={`Meilleures pizzerias à ${displayName} et proximité`}
               variant="gold"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -277,7 +277,7 @@ export default function SectorPageClient({
           <section className="mb-10">
             <SectionHeader
               count={others.length}
-              title={`Autre${others.length > 1 ? 's' : ''} Pizzeria${others.length > 1 ? 's' : ''}`}
+              title="Autres pizzerias à proximité"
               variant="blue"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

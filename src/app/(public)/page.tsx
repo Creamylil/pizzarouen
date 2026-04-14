@@ -25,12 +25,12 @@ export default async function HomePage({
     fetchGeographicSectors(),
   ]);
 
-  // Redirect /?sector=slug to /slug (301)
+  // Redirect /?sector=slug to /slug (301) — only for published sectors
   if (params.sector && params.sector !== 'all') {
     const matchingSector = sectors.find(
       s => s.slug === params.sector || s.postal_code === params.sector
     );
-    if (matchingSector) {
+    if (matchingSector && matchingSector.is_published !== false) {
       redirect(`/${matchingSector.slug}`);
     }
   }

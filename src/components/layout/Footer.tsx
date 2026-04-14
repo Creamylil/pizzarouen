@@ -12,8 +12,6 @@ interface FooterProps {
 }
 
 export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp, logoUrl, sectors }: FooterProps) {
-  const publishedSectors = sectors.filter(s => s.is_published !== false);
-
   return (
     <footer className="bg-gray-900 text-white py-12">
       <div className="max-w-6xl mx-auto px-4">
@@ -33,14 +31,14 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
             </p>
           </div>
 
-          {publishedSectors.length > 0 && (
+          {sectors.length > 0 && (
             <div>
               <h3 className="font-semibold mb-4">Secteurs</h3>
               <ul className="space-y-2 text-sm">
-                {publishedSectors.map(sector => (
+                {sectors.map(sector => (
                   <li key={sector.id}>
                     <Link
-                      href={`/${sector.slug}`}
+                      href={sector.is_published !== false ? `/${sector.slug}` : '/'}
                       className="text-gray-300 hover:text-white transition-colors"
                     >
                       {sector.display_name || sector.name}
