@@ -29,7 +29,7 @@ const dataNav = [
 const commercialNav = [
   { title: 'Fiches commerciales', href: '/admin/crm/fiches', icon: Store },
   { title: 'Pipeline CRM', href: '/admin/crm', icon: ClipboardList },
-  { title: 'Commerciaux', href: '/admin/commercials', icon: Users },
+  { title: 'Équipe', href: '/admin/commercials', icon: Users },
 ];
 
 const simulateurNav = { title: 'Simulateur', href: '/admin/simulateur', icon: Calculator };

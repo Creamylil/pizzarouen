@@ -15,7 +15,7 @@ export default async function CommercialsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Commerciaux</h1>
+          <h1 className="text-2xl font-bold">Équipe</h1>
           <p className="text-sm text-gray-500 mt-1">
             {commercials.filter((c) => c.active).length} actif{commercials.filter((c) => c.active).length > 1 ? 's' : ''} sur {commercials.length} total
           </p>
