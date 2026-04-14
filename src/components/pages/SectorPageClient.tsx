@@ -244,6 +244,15 @@ export default function SectorPageClient({
           </section>
         )}
 
+        {/* Message quand aucune pizzeria n'est ouverte sur ce secteur */}
+        {localOpen.length === 0 && localClosed.length > 0 && (
+          <div className="mb-8 rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
+            <p className="text-sm text-amber-800">
+              Aucune pizzeria n&apos;est ouverte actuellement à {displayName}. Les horaires sont mis à jour régulièrement — les pizzerias ouvertes apparaîtront en haut de cette page.
+            </p>
+          </div>
+        )}
+
         {/* Bloc 2: Fermées sur ce secteur */}
         {localClosed.length > 0 && (
           <section className="mb-10">
