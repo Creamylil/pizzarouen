@@ -1,8 +1,8 @@
 import CityForm from '../CityForm';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 
 export default async function NewCityPage() {
-  await requireAdmin();
+  await requirePermission('cities');
 
   return (
     <div>

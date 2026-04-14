@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { requireAuth } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import SimulateurAdmin from './SimulateurAdmin';
 import SimulateurCommercial from './SimulateurCommercial';
 
@@ -12,7 +12,7 @@ function createCrmClient() {
 }
 
 export default async function SimulateurPage() {
-  const session = await requireAuth();
+  const session = await requirePermission('simulateur');
 
   if (session.role === 'admin') {
     return (

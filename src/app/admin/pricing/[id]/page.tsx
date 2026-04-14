@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import PricingForm from '../PricingForm';
 
 function createPricingClient() {
@@ -12,7 +12,7 @@ function createPricingClient() {
 }
 
 export default async function EditPricingPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  await requirePermission('pricing');
 
   const { id } = await params;
   const supabase = createPricingClient();

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { parsePermissions, type Permissions } from '@/lib/permissions';
 
 export interface CommercialRow {
   id: string;
@@ -11,6 +12,8 @@ export interface CommercialRow {
   commission_month1_rate: number;
   commission_recurring_rate: number;
   commission_duration_months: number;
+  poste: string | null;
+  permissions: Permissions;
 }
 
 export type SessionInfo =
@@ -74,7 +77,7 @@ export async function getSessionRole(): Promise<SessionInfo> {
 
   const { data: commercial } = await crmClient
     .from('commercials')
-    .select('id, name, email, phone, can_see_all_deals, commission_month1_rate, commission_recurring_rate, commission_duration_months')
+    .select('id, name, email, phone, can_see_all_deals, commission_month1_rate, commission_recurring_rate, commission_duration_months, poste, permissions')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -83,9 +86,14 @@ export async function getSessionRole(): Promise<SessionInfo> {
     return null;
   }
 
+  const commercialData = commercial as Record<string, unknown>;
+
   return {
     role: 'commercial',
     userId: user.id,
-    commercial: commercial as unknown as CommercialRow,
+    commercial: {
+      ...commercial,
+      permissions: parsePermissions(commercialData.permissions),
+    } as unknown as CommercialRow,
   };
 }

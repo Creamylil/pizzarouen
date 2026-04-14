@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { requireAuth } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import DealCard from './DealCard';
 import NotesSection from './NotesSection';
 import Timeline from './Timeline';
@@ -45,7 +45,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
   const pizzeria = pizzeriaResult.data;
   if (!pizzeria) notFound();
 
-  const session = await requireAuth();
+  const session = await requirePermission('pipeline');
   const deal = dealResult.data as Record<string, unknown> | null;
 
   // Access control: restricted commercials can only view their own deals

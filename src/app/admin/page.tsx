@@ -7,6 +7,7 @@ import { Building2, Pizza, MapPin, ArrowRightLeft, ClipboardList, TrendingUp, Us
 import { DEAL_STATUSES } from './schemas/deal';
 import { getCommercials } from './actions/crm';
 import { requireAuth } from '@/lib/auth/require-role';
+import type { PermissionKey } from '@/lib/permissions';
 
 function createCrmClient() {
   return createClient(
@@ -31,6 +32,13 @@ interface DealRow {
 export default async function AdminDashboardPage() {
   const session = await requireAuth();
   if (session.role === 'commercial') {
+    const perms = session.commercial?.permissions as Record<PermissionKey, boolean> | undefined;
+    if (perms?.pipeline) redirect('/admin/crm');
+    if (perms?.fiches) redirect('/admin/crm/fiches');
+    if (perms?.simulateur) redirect('/admin/simulateur');
+    if (perms?.team) redirect('/admin/commercials');
+    if (perms?.cities) redirect('/admin/cities');
+    if (perms?.pizzerias) redirect('/admin/pizzerias');
     redirect('/admin/crm');
   }
 

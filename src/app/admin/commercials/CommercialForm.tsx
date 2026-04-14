@@ -7,6 +7,7 @@ import { upsertCommercial } from '../actions/crm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PERMISSION_KEYS, PERMISSION_LABELS, PERMISSION_GROUPS, DEFAULT_PERMISSIONS, parsePermissions, type PermissionKey, type Permissions } from '@/lib/permissions';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,8 @@ interface CommercialFormProps {
     commission_month1_rate: number | null;
     commission_recurring_rate: number | null;
     commission_duration_months: number | null;
+    poste: string | null;
+    permissions: Record<string, boolean> | null;
   };
 }
 
@@ -41,7 +44,15 @@ export default function CommercialForm({ existing }: CommercialFormProps) {
   const [commissionMonth1Rate, setCommissionMonth1Rate] = useState<number | null>(existing?.commission_month1_rate ?? null);
   const [commissionRecurringRate, setCommissionRecurringRate] = useState<number | null>(existing?.commission_recurring_rate ?? null);
   const [commissionDurationMonths, setCommissionDurationMonths] = useState<number | null>(existing?.commission_duration_months ?? null);
+  const [poste, setPoste] = useState(existing?.poste ?? 'Commercial');
+  const [permissions, setPermissions] = useState<Permissions>(
+    existing?.permissions ? parsePermissions(existing.permissions) : DEFAULT_PERMISSIONS
+  );
   const [loading, setLoading] = useState(false);
+
+  const togglePermission = (key: PermissionKey) => {
+    setPermissions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const isEdit = !!existing;
 
@@ -62,6 +73,8 @@ export default function CommercialForm({ existing }: CommercialFormProps) {
         commission_month1_rate: commissionMonth1Rate,
         commission_recurring_rate: commissionRecurringRate,
         commission_duration_months: commissionDurationMonths,
+        poste: poste.trim() || null,
+        permissions,
       },
       existing?.id
     );
@@ -78,6 +91,8 @@ export default function CommercialForm({ existing }: CommercialFormProps) {
         setCommissionMonth1Rate(null);
         setCommissionRecurringRate(null);
         setCommissionDurationMonths(null);
+        setPoste('Commercial');
+        setPermissions(DEFAULT_PERMISSIONS);
       }
       router.refresh();
     } else {
@@ -154,6 +169,45 @@ export default function CommercialForm({ existing }: CommercialFormProps) {
                 Peut voir tous les deals
               </label>
             </div>
+          </div>
+
+          {/* Section Poste */}
+          <div className="space-y-3 border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700">Poste</h3>
+            <div>
+              <label className="text-sm font-medium mb-1 block">Intitulé du poste</label>
+              <Input
+                value={poste}
+                onChange={(e) => setPoste(e.target.value)}
+                placeholder="Commercial, Responsable CRM, Admin terrain..."
+              />
+            </div>
+          </div>
+
+          {/* Section Permissions */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="text-sm font-semibold text-gray-700">Accès aux fonctionnalités</h3>
+            {PERMISSION_GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                  {group.label}
+                </p>
+                <div className="space-y-2">
+                  {group.keys.map((key) => (
+                    <div key={key} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`perm_${key}`}
+                        checked={permissions[key]}
+                        onCheckedChange={() => togglePermission(key)}
+                      />
+                      <label htmlFor={`perm_${key}`} className="text-sm cursor-pointer">
+                        {PERMISSION_LABELS[key]}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Section Commission */}

@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import SectorForm from '../SectorForm';
 
 export default async function EditSectorPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  await requirePermission('sectors');
 
   const { id } = await params;
   const supabase = createAdminSupabaseClient();

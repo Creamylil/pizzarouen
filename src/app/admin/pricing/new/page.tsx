@@ -1,8 +1,8 @@
 import PricingForm from '../PricingForm';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 
 export default async function NewPricingPage() {
-  await requireAdmin();
+  await requirePermission('pricing');
 
   return (
     <div>

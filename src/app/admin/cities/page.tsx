@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Pencil } from 'lucide-react';
 import DeleteCityButton from './DeleteCityButton';
 
 export default async function CitiesPage() {
-  await requireAdmin();
+  await requirePermission('cities');
 
   const supabase = createAdminSupabaseClient();
   const { data: cities } = await supabase

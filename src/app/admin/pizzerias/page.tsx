@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Plus, Pencil, Star } from 'lucide-react';
 import DeletePizzeriaButton from './DeletePizzeriaButton';
 
 export default async function PizzeriasPage() {
-  await requireAdmin();
+  await requirePermission('pizzerias');
 
   const supabase = createAdminSupabaseClient();
   const { data: pizzerias } = await supabase

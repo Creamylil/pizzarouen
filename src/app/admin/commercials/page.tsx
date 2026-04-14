@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getAllCommercials } from '../actions/crm';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import CommercialForm from './CommercialForm';
 import ToggleActiveButton from './ToggleActiveButton';
 import { Users } from 'lucide-react';
+import { PERMISSION_KEYS, PERMISSION_LABELS } from '@/lib/permissions';
 
 export default async function CommercialsPage() {
-  await requireAdmin();
+  await requirePermission('team');
 
   const commercials = await getAllCommercials();
 
@@ -54,6 +55,11 @@ export default async function CommercialsPage() {
                       {c.can_see_all_deals && (
                         <Badge variant="default" className="text-xs">Voir tout</Badge>
                       )}
+                      {c.poste && (
+                        <Badge variant="outline" className="text-xs text-gray-600">
+                          {c.poste}
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                       {c.email && <span>{c.email}</span>}
@@ -66,6 +72,15 @@ export default async function CommercialsPage() {
                           c.commission_recurring_rate != null ? `${c.commission_recurring_rate}% récurrent` : null,
                           c.commission_duration_months != null ? `${c.commission_duration_months} mois` : null,
                         ].filter(Boolean).join(' / ')}
+                      </div>
+                    )}
+                    {c.permissions && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {PERMISSION_KEYS.filter((k) => (c.permissions as Record<string, boolean>)?.[k]).map((k) => (
+                          <span key={k} className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                            {PERMISSION_LABELS[k]}
+                          </span>
+                        ))}
                       </div>
                     )}
                   </div>

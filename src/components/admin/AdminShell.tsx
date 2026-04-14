@@ -4,8 +4,9 @@ import { useState } from 'react';
 import AdminSidebar from './AdminSidebar';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import type { Permissions } from '@/lib/permissions';
 
-export default function AdminShell({ children, userRole }: { children: React.ReactNode; userRole: 'admin' | 'commercial' }) {
+export default function AdminShell({ children, userRole, permissions }: { children: React.ReactNode; userRole: 'admin' | 'commercial'; permissions: Permissions | null }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -31,7 +32,7 @@ export default function AdminShell({ children, userRole }: { children: React.Rea
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <AdminSidebar onNavigate={() => setMobileOpen(false)} userRole={userRole} />
+          <AdminSidebar onNavigate={() => setMobileOpen(false)} userRole={userRole} permissions={permissions} />
         </div>
       </aside>
 

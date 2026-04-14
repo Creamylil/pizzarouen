@@ -8,7 +8,7 @@ import { DEAL_STATUSES } from '../schemas/deal';
 import { getCommercials } from '../actions/crm';
 import { ExternalLink, Phone } from 'lucide-react';
 import PipelineFilters from './PipelineFilters';
-import { requireAuth } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 
 function createCrmClient() {
   return createClient(
@@ -35,7 +35,7 @@ interface Props {
 }
 
 export default async function CrmPage({ searchParams }: Props) {
-  const session = await requireAuth();
+  const session = await requirePermission('pipeline');
   const filters = await searchParams;
   const crmClient = createCrmClient();
   const supabase = createAdminSupabaseClient();

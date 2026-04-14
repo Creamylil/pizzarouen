@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ function createPricingClient() {
 }
 
 export default async function PricingPage() {
-  await requireAdmin();
+  await requirePermission('pricing');
 
   const supabase = createPricingClient();
   const { data: plans } = await supabase

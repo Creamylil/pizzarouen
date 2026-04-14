@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getStripe } from '@/lib/stripe';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import type { DealFormData, EventFormData } from '../schemas/deal';
+import type { Permissions } from '@/lib/permissions';
 
 type ActionResult = { success: true } | { success: false; error: string };
 type PaymentLinkResult = { success: true; url: string } | { success: false; error: string };
@@ -178,6 +179,8 @@ export async function getAllCommercials() {
     commission_month1_rate: number | null;
     commission_recurring_rate: number | null;
     commission_duration_months: number | null;
+    poste: string | null;
+    permissions: Record<string, boolean> | null;
   }[] | null) ?? [];
 }
 
@@ -191,6 +194,8 @@ export async function upsertCommercial(
     commission_month1_rate: number | null;
     commission_recurring_rate: number | null;
     commission_duration_months: number | null;
+    poste: string | null;
+    permissions: Permissions;
   },
   existingId?: string
 ): Promise<ActionResult> {
@@ -204,6 +209,8 @@ export async function upsertCommercial(
     commission_month1_rate: data.commission_month1_rate,
     commission_recurring_rate: data.commission_recurring_rate,
     commission_duration_months: data.commission_duration_months,
+    poste: data.poste,
+    permissions: data.permissions,
   };
 
   if (existingId) {

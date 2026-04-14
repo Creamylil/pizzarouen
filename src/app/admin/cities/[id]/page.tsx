@@ -1,10 +1,10 @@
 import { notFound } from 'next/navigation';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
-import { requireAdmin } from '@/lib/auth/require-role';
+import { requirePermission } from '@/lib/auth/require-role';
 import CityForm from '../CityForm';
 
 export default async function EditCityPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
+  await requirePermission('cities');
 
   const { id } = await params;
   const supabase = createAdminSupabaseClient();
