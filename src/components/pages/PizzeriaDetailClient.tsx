@@ -387,7 +387,7 @@ export default function PizzeriaDetailClient({
               {top10Pizzerias.length}
             </span>
             <h2 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
-              Meilleures Pizzerias à {cityName}
+              Meilleures Pizzerias à proximité de {pizzeria.name}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
