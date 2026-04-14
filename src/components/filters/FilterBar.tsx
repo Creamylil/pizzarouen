@@ -37,7 +37,7 @@ export default function FilterBar({ filters, onLocalFiltersChange }: FilterBarPr
           `}
           style={{ fontFamily: 'var(--font-body)' }}
         >
-          <span className="text-xs">☪️</span>
+          <span className="text-xs" aria-hidden="true">☪️</span>
           Pizza Halal
         </button>
       </h2>
@@ -55,7 +55,7 @@ export default function FilterBar({ filters, onLocalFiltersChange }: FilterBarPr
           `}
           style={{ fontFamily: 'var(--font-body)' }}
         >
-          <span className="text-xs">🏆</span>
+          <span className="text-xs" aria-hidden="true">🏆</span>
           Top 10 Meilleures Pizzerias
         </button>
       </h2>

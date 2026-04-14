@@ -283,7 +283,7 @@ export default function PizzeriaDetailClient({
           {/* Types de service */}
           {pizzeria.types.length > 0 && (
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Services</h3>
+              <h2 className="text-sm font-semibold text-foreground mb-2">Services</h2>
               <div className="flex flex-wrap gap-2">
                 {pizzeria.types.map(type => {
                   const service = serviceIcons[type];
@@ -305,7 +305,7 @@ export default function PizzeriaDetailClient({
           {/* Spécialités */}
           {pizzeria.specialties.length > 0 && (
             <div className="mb-4 last:mb-0">
-              <h3 className="text-sm font-semibold text-foreground mb-2">Spécialités</h3>
+              <h2 className="text-sm font-semibold text-foreground mb-2">Spécialités</h2>
               <div className="flex flex-wrap gap-2">
                 {pizzeria.specialties.map(specialty => (
                   <span
@@ -322,7 +322,7 @@ export default function PizzeriaDetailClient({
           {/* Services additionnels */}
           {pizzeria.services.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-2">Équipements</h3>
+              <h2 className="text-sm font-semibold text-foreground mb-2">Équipements</h2>
               <div className="flex flex-wrap gap-2">
                 {pizzeria.services.map(service => (
                   <span

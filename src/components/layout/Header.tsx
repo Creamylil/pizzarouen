@@ -87,8 +87,8 @@ export default function Header({
                 `}
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                <span className="text-base sm:text-lg leading-none">{tab.icon}</span>
-                <span>{tab.label}</span>
+                <span className="text-base sm:text-lg leading-none" aria-hidden="true">{tab.icon}</span>
+                {tab.label}
               </button>
             </h2>
           ))}
