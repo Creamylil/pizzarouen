@@ -241,6 +241,7 @@ async function scrapePizzerias(
 
   const pizzeriasWithPostalCodes: { postalCode: string; lat: number; lng: number; name: string }[] = [];
   const batchInserts: any[] = [];
+  const usedSlugs = new Set<string>();
 
   for (let i = 0; i < results.length; i++) {
     const place = results[i];
@@ -296,9 +297,29 @@ async function scrapePizzerias(
       priceRange,
     };
 
+    // Générer un slug unique
+    let slug = slugify(name);
+    if (usedSlugs.has(slug)) {
+      // Ajouter le nom de la commune pour dédupliquer (ex: dominos-pizza-canteleu)
+      const communeName = postalCode
+        ? nearbyCommunes.find(c => c.postalCodes.includes(postalCode))?.name
+        : null;
+      const suffix = communeName ? slugify(communeName) : postalCode || String(i);
+      slug = `${slug}-${suffix}`;
+    }
+    // Si toujours en doublon, ajouter un compteur
+    let finalSlug = slug;
+    let counter = 2;
+    while (usedSlugs.has(finalSlug)) {
+      finalSlug = `${slug}-${counter}`;
+      counter++;
+    }
+    usedSlugs.add(finalSlug);
+
     const row = {
       city_id: cityId,
       name,
+      slug: finalSlug,
       address,
       phone,
       rating,
