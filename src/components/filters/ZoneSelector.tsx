@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin } from 'lucide-react';
 import type { ZoneDefinition } from '@/utils/geographicRanking';
 import type { Pizzeria, GeographicSector } from '@/types/pizzeria';
-import { sectorToZone, matchesSectorLogic } from '@/utils/geographicRanking';
+import { sectorToZone } from '@/utils/geographicRanking';
 
 interface ZoneSelectorProps {
   selectedZone: ZoneDefinition | null;
@@ -14,12 +14,12 @@ interface ZoneSelectorProps {
   pizzerias: Pizzeria[];
 }
 
-export default function ZoneSelector({ selectedZone, onZoneSelect, sectors, pizzerias }: ZoneSelectorProps) {
+export default function ZoneSelector({ selectedZone, onZoneSelect, sectors }: ZoneSelectorProps) {
   const router = useRouter();
 
-  const allZones = sectors.map(sector => sectorToZone(sector)).filter(zone => {
-    return pizzerias.some(pizzeria => matchesSectorLogic(pizzeria.address, zone.id, sectors));
-  });
+  // Afficher tous les secteurs dans le sélecteur, y compris ceux
+  // sans pizzeria locale (communes proches découvertes proactivement)
+  const allZones = sectors.map(sector => sectorToZone(sector));
 
   const handleZoneChange = (zoneId: string) => {
     if (zoneId === 'all') {
