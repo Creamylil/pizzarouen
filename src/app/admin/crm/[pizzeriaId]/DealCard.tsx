@@ -48,7 +48,6 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
   const isAnnualFromDb = (deal?.is_annual as boolean) ?? false;
   const monthlyFromDb = (deal?.monthly_amount as number) ?? null;
 
-  // Si annuel en DB, afficher le montant annuel (×12) dans le formulaire
   const displayAmount = isAnnualFromDb && monthlyFromDb
     ? Math.round(monthlyFromDb * 12 * 100) / 100
     : monthlyFromDb;
@@ -135,9 +134,8 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
           </div>
         )}
 
-        {/* Grille 3 colonnes dense */}
+        {/* Ligne 1 : Commercial / Formule */}
         <div className="grid grid-cols-3 gap-3">
-          {/* Ligne 1 : Commercial / Formule / Montant */}
           {!isEdit && (
             <FormField control={form.control} name="status" render={({ field }) => (
               <FormItem>
@@ -198,60 +196,43 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
               <FormMessage />
             </FormItem>
           )} />
+        </div>
 
-          {/* Montant + checkbox annuel */}
+        {/* Ligne 2 : Montant + Annuel | Paiement | Début + raccourcis */}
+        <div className="grid grid-cols-3 gap-3 mt-3">
+          {/* Montant + checkbox Annuel côte à côte */}
           <FormField control={form.control} name="monthly_amount" render={({ field }) => (
             <FormItem>
               <FormLabel className="text-xs">
                 {watchIsAnnual ? 'Montant annuel (€)' : 'Montant mensuel (€)'}
               </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  step="0.01"
-                  className="h-9"
-                  value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
-                />
-              </FormControl>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    className="h-9"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                  />
+                </FormControl>
+                <FormField control={form.control} name="is_annual" render={({ field: annualField }) => (
+                  <FormItem className="flex items-center gap-1 shrink-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={annualField.value}
+                        onCheckedChange={annualField.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel className="!mt-0 text-[11px] font-normal cursor-pointer whitespace-nowrap">
+                      Annuel
+                    </FormLabel>
+                  </FormItem>
+                )} />
+              </div>
               {watchIsAnnual && watchAmount != null && watchAmount > 0 && (
                 <p className="text-[11px] text-green-600">= {(watchAmount / 12).toFixed(2)}€/mois</p>
               )}
-              <FormMessage />
-            </FormItem>
-          )} />
-        </div>
-
-        {/* Ligne 2 : Dates + Mode paiement */}
-        <div className="grid grid-cols-3 gap-3 mt-3">
-          <FormField control={form.control} name="subscription_start" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Début</FormLabel>
-              <div className="flex items-center gap-1">
-                <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
-                <button
-                  type="button"
-                  onClick={() => handleDuration(6)}
-                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
-                >
-                  6m
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDuration(12)}
-                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
-                >
-                  1a
-                </button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )} />
-
-          <FormField control={form.control} name="subscription_end" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-xs">Fin</FormLabel>
-              <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
               <FormMessage />
             </FormItem>
           )} />
@@ -277,21 +258,39 @@ export default function DealCard({ pizzeriaId, deal, commercials }: DealCardProp
               <FormMessage />
             </FormItem>
           )} />
+
+          <FormField control={form.control} name="subscription_start" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Début</FormLabel>
+              <div className="flex items-center gap-1">
+                <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+                <button
+                  type="button"
+                  onClick={() => handleDuration(6)}
+                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
+                >
+                  6m
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDuration(12)}
+                  className="shrink-0 text-[10px] text-gray-500 hover:text-gray-800 border rounded px-1.5 py-0.5"
+                >
+                  1a
+                </button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )} />
         </div>
 
-        {/* Checkbox annuel + Contact gérant + bouton save — même ligne */}
+        {/* Ligne 3 : Fin abonnement | Contact gérant (3 champs) | Save */}
         <div className="flex items-end gap-3 mt-3">
-          <FormField control={form.control} name="is_annual" render={({ field }) => (
-            <FormItem className="flex items-center gap-1.5 shrink-0">
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <FormLabel className="!mt-0 text-xs font-normal cursor-pointer whitespace-nowrap">
-                Annuel
-              </FormLabel>
+          <FormField control={form.control} name="subscription_end" render={({ field }) => (
+            <FormItem className="w-[140px] shrink-0">
+              <FormLabel className="text-xs">Fin</FormLabel>
+              <FormControl><Input type="date" className="h-9" {...field} /></FormControl>
+              <FormMessage />
             </FormItem>
           )} />
 

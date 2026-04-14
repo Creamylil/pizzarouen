@@ -8,14 +8,7 @@ import { useRouter } from 'next/navigation';
 import { emailComposerSchema, type EmailComposerData } from '../../schemas/email';
 import { sendQuickEmail } from '../../actions/email';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Mail, Send, Loader2 } from 'lucide-react';
+import { Mail, Send, Loader2, ChevronDown, ChevronUp, X } from 'lucide-react';
 
 interface EmailComposerProps {
   dealId: string;
@@ -25,7 +18,7 @@ interface EmailComposerProps {
 
 export default function EmailComposer({ dealId, pizzeriaId, defaultTo }: EmailComposerProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);
 
   const {
@@ -48,79 +41,94 @@ export default function EmailComposer({ dealId, pizzeriaId, defaultTo }: EmailCo
     setSending(false);
 
     if (result.success) {
-      toast.success('Email envoyé');
+      toast.success('Email envoyé au client');
       reset({ to: defaultTo, subject: '', body: '' });
-      setOpen(false);
+      setExpanded(false);
       router.refresh();
     } else {
       toast.error(result.error);
     }
   }
 
+  if (!expanded) {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-8 text-xs gap-1.5"
+        onClick={() => setExpanded(true)}
+      >
+        <Mail className="h-3.5 w-3.5" />
+        Email
+      </Button>
+    );
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5">
+    <div className="w-full bg-white border rounded-lg p-3 mt-1">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
           <Mail className="h-3.5 w-3.5" />
-          Email
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="text-base">Envoyer un email</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+          Envoyer un email au client
+        </span>
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+        <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">À</label>
             <input
               type="email"
               {...register('to')}
-              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email destinataire"
             />
-            {errors.to && <p className="text-xs text-red-500 mt-0.5">{errors.to.message}</p>}
+            {errors.to && <p className="text-[11px] text-red-500 mt-0.5">{errors.to.message}</p>}
           </div>
-
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Sujet</label>
             <input
               type="text"
               {...register('subject')}
               placeholder="Objet de l'email..."
-              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {errors.subject && <p className="text-xs text-red-500 mt-0.5">{errors.subject.message}</p>}
+            {errors.subject && <p className="text-[11px] text-red-500 mt-0.5">{errors.subject.message}</p>}
           </div>
+        </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">Message</label>
-            <textarea
-              {...register('body')}
-              rows={5}
-              placeholder="Votre message..."
-              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-            />
-            {errors.body && <p className="text-xs text-red-500 mt-0.5">{errors.body.message}</p>}
-          </div>
+        <div>
+          <textarea
+            {...register('body')}
+            rows={3}
+            placeholder="Votre message..."
+            className="w-full px-2.5 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+          />
+          {errors.body && <p className="text-[11px] text-red-500 mt-0.5">{errors.body.message}</p>}
+        </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <Button type="submit" disabled={sending} size="sm" className="gap-1.5">
-              {sending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Send className="h-3.5 w-3.5" />
-              )}
-              {sending ? 'Envoi...' : 'Envoyer'}
-            </Button>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700"
-            >
-              Annuler
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <div className="flex items-center gap-2">
+          <Button type="submit" disabled={sending} size="sm" className="h-8 gap-1.5 text-xs">
+            {sending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Send className="h-3.5 w-3.5" />
+            )}
+            {sending ? 'Envoi...' : 'Envoyer au client'}
+          </Button>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="text-xs text-gray-400 hover:text-gray-600"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

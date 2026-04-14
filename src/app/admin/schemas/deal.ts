@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 export const DEAL_STATUSES = [
-  { value: 'prospect', label: 'Prospect', color: 'bg-gray-100 text-gray-700' },
-  { value: 'contacte', label: 'Contacté', color: 'bg-blue-100 text-blue-700' },
-  { value: 'interesse', label: 'Intéressé', color: 'bg-cyan-100 text-cyan-700' },
-  { value: 'negocie', label: 'Négocie', color: 'bg-yellow-100 text-yellow-700' },
-  { value: 'abonne', label: 'Abonné', color: 'bg-green-100 text-green-700' },
-  { value: 'refuse', label: 'Refusé', color: 'bg-red-100 text-red-700' },
-  { value: 'resilie', label: 'Résilié', color: 'bg-orange-100 text-orange-700' },
+  { value: 'prospect', label: 'Prospect', color: 'bg-gray-200 text-gray-900' },
+  { value: 'contacte', label: 'Contacté', color: 'bg-blue-200 text-gray-900' },
+  { value: 'interesse', label: 'Intéressé', color: 'bg-cyan-200 text-gray-900' },
+  { value: 'negocie', label: 'Négocie', color: 'bg-yellow-200 text-gray-900' },
+  { value: 'abonne', label: 'Abonné', color: 'bg-green-200 text-gray-900' },
+  { value: 'refuse', label: 'Refusé', color: 'bg-red-200 text-gray-900' },
+  { value: 'resilie', label: 'Résilié', color: 'bg-orange-200 text-gray-900' },
 ] as const;
 
 export const EVENT_TYPES = [

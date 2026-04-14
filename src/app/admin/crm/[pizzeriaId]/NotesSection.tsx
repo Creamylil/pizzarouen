@@ -54,7 +54,7 @@ export default function NotesSection({ dealId, pizzeriaId, notes }: NotesSection
           rows={1}
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Ajouter une note... (Ctrl+Enter pour envoyer)"
+          placeholder="Ajouter une note interne... (Ctrl+Enter pour enregistrer)"
           className="resize-none text-sm min-h-[36px]"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {

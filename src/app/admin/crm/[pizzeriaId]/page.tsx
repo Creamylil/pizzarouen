@@ -11,7 +11,7 @@ import EmailComposer from './EmailComposer';
 import EmailStatusBadge from './EmailStatusBadge';
 import { getCommercials, getNotesForDeal } from '../../actions/crm';
 import { sendWelcomeEmail } from '../../actions/email';
-import { Phone, Mail, MapPin, ArrowLeft } from 'lucide-react';
+import { Phone, Mail, MapPin, ArrowLeft, ExternalLink, Globe } from 'lucide-react';
 import Link from 'next/link';
 
 function createCrmClient() {
@@ -30,7 +30,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
   const [pizzeriaResult, dealResult, commercials] = await Promise.all([
     supabase
       .from('pizzerias')
-      .select('id, name, address, phone, city_id, cities(name)')
+      .select('id, name, slug, address, phone, city_id, cities(name, slug, site_url, main_postal_codes)')
       .eq('id', pizzeriaId)
       .single(),
     crmClient
@@ -76,7 +76,24 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
 
   const events = eventsResult.data;
 
-  const cityName = (pizzeria.cities as unknown as { name: string })?.name ?? '';
+  const cityData = pizzeria.cities as unknown as {
+    name: string;
+    slug: string;
+    site_url: string;
+    main_postal_codes: string[];
+  } | null;
+  const cityName = cityData?.name ?? '';
+  const siteUrl = cityData?.site_url ?? '';
+
+  // Construire le lien vers la page publique de la pizzeria
+  // Simple heuristique : si la pizzeria a un slug et un site_url de ville
+  let pizzeriaPublicUrl: string | null = null;
+  if (pizzeria.slug && siteUrl) {
+    // Pour les pizzerias du centre ville, l'URL est /{slug}
+    // Pour les communes, c'est /{secteur}/{slug} — on utilise /{slug} par défaut (le plus courant)
+    pizzeriaPublicUrl = `${siteUrl}/${pizzeria.slug}`;
+  }
+
   const assignedCommercial = deal?.assigned_to
     ? commercials.find((c) => c.id === deal.assigned_to)
     : null;
@@ -104,10 +121,39 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
               <h1 className="text-xl font-bold truncate">{pizzeria.name}</h1>
               {deal && <EmailStatusBadge events={(events as Record<string, unknown>[] | null) ?? []} />}
             </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1">
+
+            {/* Ligne infos : ville, liens site/page, adresse, tél, commercial */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+              {/* Liens site ville + page pizzeria — toujours visibles */}
+              {siteUrl && (
+                <a
+                  href={siteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  <Globe className="h-3 w-3" />
+                  {cityName}
+                </a>
+              )}
+              {pizzeriaPublicUrl && (
+                <a
+                  href={pizzeriaPublicUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Voir la fiche
+                </a>
+              )}
+              {!siteUrl && cityName && (
+                <span className="font-medium text-gray-600">{cityName}</span>
+              )}
+
+              <span className="flex items-center gap-1 text-gray-400">
                 <MapPin className="h-3 w-3" />
-                {pizzeria.address} · {cityName}
+                {pizzeria.address}
               </span>
               {pizzeria.phone && (
                 <a href={`tel:${pizzeria.phone}`} className="flex items-center gap-1 hover:text-gray-700">
@@ -124,6 +170,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
                 </span>
               )}
             </div>
+
             {/* Contact gérant — inline dans la top bar */}
             {(cName || cPhone || cEmail) && (
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-sm">
@@ -171,7 +218,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
 
           {/* Actions rapides — paiement + email sur une ligne */}
           {deal && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-start gap-2">
               {(deal.monthly_amount as number) > 0 && (deal.pricing_plan_slug as string) && (deal.pricing_plan_slug as string) !== 'none' && (
                 <GeneratePaymentButton
                   dealId={deal.id as string}
