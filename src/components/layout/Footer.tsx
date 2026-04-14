@@ -33,7 +33,7 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
 
           {sectors.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-4">Secteurs</h3>
+              <span className="font-semibold mb-4 block">Secteurs</span>
               <ul className="space-y-2 text-sm">
                 {sectors.map(sector => (
                   <li key={sector.id}>
@@ -50,7 +50,7 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
           )}
 
           <div>
-            <h3 className="font-semibold mb-4">Navigation</h3>
+            <span className="font-semibold mb-4 block">Navigation</span>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
@@ -88,7 +88,7 @@ export default function Footer({ cityDisplayName, contactEmail, contactWhatsapp,
           </div>
 
           <div>
-            <h3 className="font-semibold mb-4">Contact</h3>
+            <span className="font-semibold mb-4 block">Contact</span>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-gray-300">
                 <Mail className="h-4 w-4" />
