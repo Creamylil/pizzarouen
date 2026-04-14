@@ -1,3 +1,4 @@
+import React from 'react';
 import { Phone, Mail, MapPin, Bell, CreditCard, RefreshCw, FileText, Link2 } from 'lucide-react';
 
 const ICON_MAP: Record<string, typeof Phone> = {
@@ -21,6 +22,26 @@ const TYPE_LABELS: Record<string, string> = {
   note: 'Note',
   lien_paiement: 'Lien de paiement',
 };
+
+const EMAIL_STATUS_CONFIG: Record<string, { color: string; label: string }> = {
+  sent: { color: 'text-blue-600', label: 'Envoyé' },
+  delivered: { color: 'text-green-600', label: 'Délivré' },
+  opened: { color: 'text-purple-600', label: 'Ouvert' },
+  bounced: { color: 'text-red-600', label: 'Bounced' },
+};
+
+function EmailStatusInline({ event }: { event: Record<string, unknown> }) {
+  if (event.event_type !== 'email' || !event.email_metadata) return null;
+  const meta = event.email_metadata as Record<string, unknown>;
+  const status = meta?.status as string;
+  const cfg = EMAIL_STATUS_CONFIG[status];
+  if (!cfg) return null;
+  return (
+    <span className={`ml-2 text-xs font-medium ${cfg.color}`}>
+      • {cfg.label}
+    </span>
+  );
+}
 
 interface TimelineProps {
   events: Record<string, unknown>[];
@@ -56,7 +77,10 @@ export default function Timeline({ events }: TimelineProps) {
                     {date.toLocaleDateString('fr-FR')} à {date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">{event.description as string}</p>
+                <p className="text-sm text-gray-600">
+                  {event.description as string}
+                  <EmailStatusInline event={event} />
+                </p>
               </div>
             </div>
           );

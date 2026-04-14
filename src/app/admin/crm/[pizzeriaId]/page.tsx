@@ -7,7 +7,10 @@ import Timeline from './Timeline';
 import AddEventButton from './AddEventButton';
 import LogCallButton from './LogCallButton';
 import GeneratePaymentButton from './GeneratePaymentButton';
+import EmailComposer from './EmailComposer';
+import EmailStatusBadge from './EmailStatusBadge';
 import { getCommercials, getNotesForDeal } from '../../actions/crm';
+import { sendWelcomeEmail } from '../../actions/email';
 
 function createCrmClient() {
   return createClient(
@@ -40,6 +43,22 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
   if (!pizzeria) notFound();
 
   const deal = dealResult.data as Record<string, unknown> | null;
+
+  // Auto-send welcome email si contact_email renseigné
+  if (deal) {
+    const contactEmail = deal.contact_email as string | null;
+    if (contactEmail) {
+      sendWelcomeEmail(
+        deal.id as string,
+        pizzeriaId,
+        pizzeria.name,
+        contactEmail,
+        (deal.contact_name as string) || '',
+      ).catch(() => {
+        // Silently fail — déjà envoyé ou erreur
+      });
+    }
+  }
 
   // Fetch events and notes in parallel (only if deal exists)
   const [eventsResult, notes] = deal
@@ -76,6 +95,7 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
             Dernier contact : {new Date(deal.last_contact_at as string).toLocaleDateString('fr-FR')}
           </p>
         )}
+        {deal && <EmailStatusBadge events={(events as Record<string, unknown>[] | null) ?? []} />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -104,6 +124,15 @@ export default async function CrmPizzeriaPage({ params }: { params: Promise<{ pi
               dealId={deal.id as string}
               pizzeriaId={pizzeriaId}
               notes={notes}
+            />
+          )}
+
+          {/* Email composer — only if deal has contact email */}
+          {deal && (deal.contact_email as string | null) && (
+            <EmailComposer
+              dealId={deal.id as string}
+              pizzeriaId={pizzeriaId}
+              defaultTo={deal.contact_email as string}
             />
           )}
 
