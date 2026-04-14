@@ -14,6 +14,7 @@ export interface Pizzeria {
   types: ('sur-place' | 'emporter' | 'livraison')[];
   reviewsLink?: string;
   googleMapsLink?: string;
+  websiteUrl?: string;
   openingHours?: string;
   priorityLevel: 'normal' | 'niveau_1' | 'niveau_2';
   latitude?: number;

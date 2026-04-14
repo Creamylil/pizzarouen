@@ -14,11 +14,13 @@ const API_KEY = () => {
 
 const BASE_URL = 'https://places.googleapis.com/v1/places';
 
-// Champs demandés à l'API (optimisé pour le coût)
+// Champs demandés à l'API
+// Tier Enterprise+Atmosphere déjà payé (dineIn/takeout/delivery) → tous ces champs sont inclus
 const SEARCH_FIELDS = [
   'places.id',
   'places.displayName',
   'places.formattedAddress',
+  'places.shortFormattedAddress',
   'places.location',
   'places.rating',
   'places.userRatingCount',
@@ -28,9 +30,37 @@ const SEARCH_FIELDS = [
   'places.googleMapsUri',
   'places.nationalPhoneNumber',
   'places.internationalPhoneNumber',
+  'places.websiteUri',
+  'places.editorialSummary',
+  'places.businessStatus',
+  'places.primaryType',
+  'places.types',
+  // Services
   'places.dineIn',
   'places.takeout',
   'places.delivery',
+  'places.curbsidePickup',
+  // Cuisine
+  'places.servesVegetarianFood',
+  'places.servesBeer',
+  'places.servesWine',
+  'places.servesDessert',
+  'places.servesLunch',
+  'places.servesDinner',
+  'places.servesBreakfast',
+  // Ambiance
+  'places.outdoorSeating',
+  'places.liveMusic',
+  'places.reservable',
+  'places.goodForChildren',
+  'places.menuForChildren',
+  'places.goodForGroups',
+  'places.allowsDogs',
+  'places.restroom',
+  // Options
+  'places.accessibilityOptions',
+  'places.parkingOptions',
+  'places.paymentOptions',
   'nextPageToken',
 ].join(',');
 

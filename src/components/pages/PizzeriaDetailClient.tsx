@@ -20,6 +20,7 @@ import {
   Truck,
   ShoppingBag,
   Store,
+  Globe,
 } from 'lucide-react';
 
 const PizzeriaMap = dynamic(() => import('@/components/map/PizzeriaMap'), {
@@ -245,6 +246,17 @@ export default function PizzeriaDetailClient({
             >
               <Navigation className="h-4 w-4" />
               Y aller
+            </a>
+          )}
+          {pizzeria.websiteUrl && (
+            <a
+              href={pizzeria.websiteUrl}
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 h-12 rounded-lg font-semibold text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 transition-all"
+            >
+              <Globe className="h-4 w-4" />
+              Site web
             </a>
           )}
         </div>

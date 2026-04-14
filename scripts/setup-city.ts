@@ -282,18 +282,47 @@ async function scrapePizzerias(
       await new Promise((r) => setTimeout(r, 800));
     }
 
-    // Services info — types de service depuis Google Maps (dineIn, takeout, delivery)
+    // Services info — types de service depuis Google Maps
     const serviceTypes: string[] = [];
     if (place.dineIn !== false) serviceTypes.push('sur-place');
     if (place.takeout !== false) serviceTypes.push('emporter');
     if (place.delivery !== false) serviceTypes.push('livraison');
-    // Si Google ne renvoie aucune info (tous undefined), on met les 3 par défaut
     if (serviceTypes.length === 0) serviceTypes.push('sur-place', 'emporter', 'livraison');
+
+    // Spécialités depuis les booléens Google
+    const specialties: string[] = ['Pizza'];
+    if (place.servesVegetarianFood) specialties.push('Végétarien');
+    if (place.servesDessert) specialties.push('Desserts');
+    if (place.servesBeer) specialties.push('Bières');
+    if (place.servesWine) specialties.push('Vins');
+
+    // Équipements / services depuis Google
+    const services: string[] = [];
+    if (place.outdoorSeating) services.push('Terrasse');
+    if (place.reservable) services.push('Réservation');
+    if (place.goodForChildren) services.push('Adapté aux enfants');
+    if (place.menuForChildren) services.push('Menu enfant');
+    if (place.goodForGroups) services.push('Groupes bienvenus');
+    if (place.allowsDogs) services.push('Chiens acceptés');
+    if (place.liveMusic) services.push('Musique live');
+    if (place.restroom) services.push('Toilettes');
+    if (place.curbsidePickup) services.push('Retrait en bordure');
+    // Accessibilité
+    if (place.accessibilityOptions?.wheelchairAccessibleEntrance) services.push('Accès PMR');
+    // Parking
+    if (place.parkingOptions?.freeParkingLot || place.parkingOptions?.freeStreetParking || place.parkingOptions?.freeGarageParking) {
+      services.push('Parking gratuit');
+    } else if (place.parkingOptions?.paidParkingLot || place.parkingOptions?.paidStreetParking || place.parkingOptions?.paidGarageParking) {
+      services.push('Parking');
+    }
+    // Paiement
+    if (place.paymentOptions?.acceptsNfc) services.push('Sans contact');
+    if (place.paymentOptions?.acceptsCreditCards || place.paymentOptions?.acceptsDebitCards) services.push('CB acceptée');
 
     const servicesInfo = {
       types: serviceTypes,
-      specialties: ['Pizza'],
-      services: [] as string[],
+      specialties,
+      services,
       priceRange,
     };
 
@@ -316,6 +345,9 @@ async function scrapePizzerias(
     }
     usedSlugs.add(finalSlug);
 
+    // Description : editorialSummary de Google sinon fallback vide
+    const description = place.editorialSummary?.text || '';
+
     const row = {
       city_id: cityId,
       name,
@@ -325,6 +357,7 @@ async function scrapePizzerias(
       rating,
       reviews_count: reviewsCount,
       google_maps_link: googleMapsLink,
+      website_url: place.websiteUri || null,
       image_url: imageUrl,
       latitude: lat || null,
       longitude: lng || null,
@@ -334,7 +367,7 @@ async function scrapePizzerias(
       geocoding_status: lat && lng ? 'success' : 'pending',
       geocoded_at: lat && lng ? new Date().toISOString() : null,
       halal: false,
-      description: `Pizzeria ${name} à ${config.name}. ${reviewsCount > 0 ? `Note : ${rating}/5 (${reviewsCount} avis).` : ''}`,
+      description,
     };
 
     batchInserts.push(row);

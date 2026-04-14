@@ -25,6 +25,7 @@ function transformPizzeriaData(dbPizzeria: any): Pizzeria {
     types,
     reviewsLink: dbPizzeria.reviews_link,
     googleMapsLink: dbPizzeria.google_maps_link,
+    websiteUrl: dbPizzeria.website_url || undefined,
     openingHours: dbPizzeria.opening_hours ? JSON.stringify(dbPizzeria.opening_hours) : undefined,
     priorityLevel: dbPizzeria.priority_level || 'normal',
     latitude: dbPizzeria.latitude ? parseFloat(dbPizzeria.latitude) : undefined,
