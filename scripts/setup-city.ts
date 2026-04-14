@@ -592,18 +592,32 @@ async function createSectors(
       log.error(`Erreur insertion secteurs: ${error.message}`);
       return 0;
     }
-
-    // Mettre à jour default_sector_slug avec le secteur principal
-    const mainSector = sectorInserts.find(s => config.mainPostalCodes.includes(s.postal_code));
-    const defaultSlug = mainSector ? mainSector.slug : sectorInserts[0].slug;
-    await supabase
-      .from('cities')
-      .update({ default_sector_slug: defaultSlug })
-      .eq('id', cityId);
-
-    log.success(`${sectorInserts.length} secteurs créés (default: ${defaultSlug})`);
+    log.success(`${sectorInserts.length} secteurs créés`);
   } else if (dryRun) {
     log.info(`[DRY RUN] ${sectorInserts.length} secteurs seraient créés`);
+  }
+
+  // Toujours mettre à jour default_sector_slug (même si aucun nouveau secteur)
+  // Chercher d'abord dans les nouveaux inserts, sinon dans les existants
+  if (!dryRun) {
+    const mainSectorNew = sectorInserts.find(s => config.mainPostalCodes.includes(s.postal_code));
+    let defaultSlug = mainSectorNew?.slug;
+
+    if (!defaultSlug) {
+      // Le secteur principal existait déjà → le chercher en base
+      const existingMain = (existingSectors || []).find(s =>
+        config.mainPostalCodes.includes(s.postal_code || ''),
+      );
+      defaultSlug = existingMain?.slug;
+    }
+
+    if (defaultSlug) {
+      await supabase
+        .from('cities')
+        .update({ default_sector_slug: defaultSlug })
+        .eq('id', cityId);
+      log.success(`default_sector_slug → ${defaultSlug}`);
+    }
   }
 
   return sectorInserts.length;
